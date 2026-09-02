@@ -371,7 +371,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefab: {fileID: 4017933818163956792, guid: 4413b31b3aa08614b805d7af8413ecab, type: 3}
-  spawnsPerSecond: 4
+  spawnsPerSecond: 0
   spawnRadius: 14
   maxActiveEnemies: 400
   burstCount: 100
@@ -403,6 +403,55 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   probeKey: 283
+--- !u!1 &1462345382
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1462345384}
+  - component: {fileID: 1462345383}
+  m_Layer: 0
+  m_Name: PerMonitor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1462345383
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1462345382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d0171dede45494468fab323e5efaa15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  refreshInterval: 0.5
+  fontSize: 18
+  burstKey: 282
+  toggleKey: 284
+  resetKey: 285
+--- !u!4 &1462345384
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1462345382}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.3062453, y: 2.5685458, z: 0.0005200207}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1719291569
 GameObject:
   m_ObjectHideFlags: 0
@@ -593,7 +642,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54e4c0f48fd64324296de3c155161e1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
+  maxHealth: 99999
   invincibleDuration: 0.5
 --- !u!114 &1719291576
 MonoBehaviour:
@@ -602,7 +651,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1719291569}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cc077727474a9b44a85284f4a96a51ce, type: 3}
   m_Name: 
@@ -617,3 +666,4 @@ SceneRoots:
   - {fileID: 619394802}
   - {fileID: 1719291573}
   - {fileID: 1389472551}
+  - {fileID: 1462345384}

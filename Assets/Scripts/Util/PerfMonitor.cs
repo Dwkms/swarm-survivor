@@ -30,6 +30,12 @@ public class PerfMonitor : MonoBehaviour
     // 0.5초에 한 번만 입력을 읽으면 그 순간에 키를 안 누르고 있을 수 있어 놓친다.
     private bool movedThisInterval;
 
+    // F4 리셋 이후 구간 전체의 평균.
+    // 화면의 0.5초 평균은 순간값이라 눈으로 읽는 시점에 따라 값이 달라진다.
+    // 측정용으로 쓸 수 있는 건 이쪽이다.
+    private float sessionMs;
+    private int sessionFrames;
+
     // F1 버스트 측정
     private bool burstPending;
     private float lastBurstMs = -1f;
@@ -98,6 +104,8 @@ public class PerfMonitor : MonoBehaviour
         {
             worstMs = 0f;
             lastBurstMs = -1f;
+            sessionMs = 0f;        // 추가
+            sessionFrames = 0;     // 추가
         }
 
         // ── 3. 프레임 시간 누적 ──
@@ -106,6 +114,8 @@ public class PerfMonitor : MonoBehaviour
         float ms = Time.unscaledDeltaTime * 1000f;
 
         accumulatedMs += ms;
+        sessionMs += ms;
+        sessionFrames++;
         frameCount++;
         elapsed += Time.unscaledDeltaTime;
 
@@ -138,8 +148,9 @@ public class PerfMonitor : MonoBehaviour
         float avgMs = frameCount > 0 ? accumulatedMs / frameCount : 0f;
         float fps = avgMs > 0f ? 1000f / avgMs : 0f;
 
-        // 측정 조건을 화면에 같이 띄운다.
-        // 이 프로젝트에서 가장 자주 발생한 오염이 "이동 여부를 기록하지 않은 것"이었다.
+        // 구간 평균. 측정에 쓰는 값은 이것이다.
+        float sessionAvg = sessionFrames > 0 ? sessionMs / sessionFrames : 0f;
+
         string state = movedThisInterval ? "MOVING" : "IDLE";
 
         string burst = lastBurstMs < 0f
@@ -147,11 +158,12 @@ public class PerfMonitor : MonoBehaviour
             : $"{lastBurstMs:F2} ms  /  GC {lastBurstAllocBytes / 1024f:F0} KB";
 
         cachedText =
-            $"{avgMs:F2} ms   ({fps:F0} fps)   [{state}]\n" +
-            $"worst   {worstMs:F2} ms      (F4 리셋)\n" +
+            $"now     {avgMs:F2} ms   ({fps:F0} fps)   [{state}]\n" +
+            $"AVG     {sessionAvg:F2} ms   ({sessionFrames} frames)\n" +
+            $"worst   {worstMs:F2} ms\n" +
             $"enemies {EnemySpawner.ActiveEnemyCount}\n" +
             $"burst   {burst}\n" +
-            $"elapsed {elapsed:F1} s        (F3 숨김)";
+            $"elapsed {elapsed:F1} s     (F3 숨김 / F4 리셋)";
     }
 
     private void OnGUI()
@@ -173,7 +185,7 @@ public class PerfMonitor : MonoBehaviour
             style.normal.textColor = Color.white;
         }
 
-        Rect box = new Rect(10f, 10f, 380f, 145f);
+        Rect box = new Rect(10f, 10f, 400f, 170f);
 
         GUI.DrawTexture(box, backgroundTex);
         GUI.Label(new Rect(box.x + 10f, box.y + 8f, box.width - 20f, box.height - 16f),
