@@ -10,6 +10,13 @@ public class Enemy : MonoBehaviour
     [SerializeField] private int maxHealth = 20;      // 슬라임 기준
     [SerializeField] private int contactDamage = 5;   // 몸에 닿았을 때 주는 피해
 
+    [Header("드랍")]
+    [SerializeField] private GameObject expGemPrefab;
+
+    // 프리팹이 비어 있을 때 적 한 마리마다 로그를 찍으면
+    // 900마리 스폰 시 Console이 900줄로 막힌다. 한 번만 알린다.
+    private static bool warnedMissingGem;
+
     // 플레이어가 데미지를 계산할 때 읽어간다. 읽기 전용으로만 연다.
     public int ContactDamage => contactDamage;
 
@@ -40,6 +47,12 @@ public class Enemy : MonoBehaviour
             if (player != null)
             {
                 target = player.transform;
+            }
+
+            if (expGemPrefab == null && !warnedMissingGem)
+            {
+                warnedMissingGem = true;
+                Debug.LogError("[Enemy] Exp Gem Prefab이 비어 있다. Enemy 프리팹에 젬을 지정해라.", this);
             }
         }
     }
@@ -78,11 +91,19 @@ public class Enemy : MonoBehaviour
     {
         isDead = true;
 
+        DropExpGem();
+
         // 지금은 의도적으로 Destroy를 쓴다.
-        // 풀링으로 바꿀 때 이 줄이 "풀에 반납"이 되고,
-        // OnEnable/OnDisable에 걸어둔 카운터가 그대로 동작한다.
-        // 나중에 EXP 젬 드랍도 이 자리에 들어간다.
         Destroy(gameObject);
+    }
+
+    private void DropExpGem()
+    {
+        if (expGemPrefab == null) return;
+
+        // 젬의 EXP 양은 젬 프리팹이 갖고 있다.
+        // 적 종류별로 1/2/3을 다르게 주는 것은 EnemyData(SO)를 만들 때 처리한다.
+        Instantiate(expGemPrefab, transform.position, Quaternion.identity);
     }
 
     private void OnEnable()

@@ -12,6 +12,7 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("디버그")]
     [SerializeField] private int burstCount = 100;         // F1 한 번에 만들 마릿수
+    [SerializeField] private KeyCode killAllKey = KeyCode.F5;  // F5 누를시 몹 전멸
 
     private Transform playerTransform;
 
@@ -57,6 +58,21 @@ public class EnemySpawner : MonoBehaviour
                 SpawnOne();
             }
             Debug.Log($"[F1] {burstCount}마리 스폰. 현재 활성: {ActiveEnemyCount}");
+        }
+        // F5: 살아있는 적을 전부 즉사시킨다.
+        // "적이 한꺼번에 많이 죽는 상황"을 손으로 만들기 위한 테스트 키다.
+        // FindObjectsByType은 비싸지만 키를 누른 그 프레임에만 도는 디버그 코드라 상관없다.
+        // (무기의 최근접 탐색은 매 발사마다 도는 것이라 성격이 다르다)
+        if (Input.GetKeyDown(killAllKey))
+        {
+            Enemy[] enemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
+
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                enemies[i].TakeDamage(9999);
+            }
+
+            Debug.Log($"[F5] {enemies.Length}마리 즉사 처리");
         }
     }
 

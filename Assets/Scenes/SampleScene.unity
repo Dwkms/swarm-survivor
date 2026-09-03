@@ -350,7 +350,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1389472551}
   - component: {fileID: 1389472550}
-  - component: {fileID: 1389472552}
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
@@ -371,7 +370,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefab: {fileID: 4017933818163956792, guid: 4413b31b3aa08614b805d7af8413ecab, type: 3}
-  spawnsPerSecond: 4
+  spawnsPerSecond: 10
   spawnRadius: 14
   maxActiveEnemies: 400
   burstCount: 100
@@ -390,19 +389,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1389472552
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1389472549}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c01abfc0eb319524db3ffecbae35a224, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  probeKey: 283
 --- !u!1 &1462345382
 GameObject:
   m_ObjectHideFlags: 0
@@ -467,6 +453,8 @@ GameObject:
   - component: {fileID: 1719291574}
   - component: {fileID: 1719291576}
   - component: {fileID: 1719291575}
+  - component: {fileID: 1719291577}
+  - component: {fileID: 1719291578}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -642,7 +630,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54e4c0f48fd64324296de3c155161e1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
+  maxHealth: 99999
   invincibleDuration: 0.5
 --- !u!114 &1719291576
 MonoBehaviour:
@@ -658,6 +646,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 253881072272988324, guid: 8cc7eff9a3201294184efc1fff4b1eb2, type: 3}
   fireInterval: 0.8
+--- !u!114 &1719291577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1719291569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d3d969e7c6036845828d8e489574311, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pickupRadius: 1.5
+--- !u!114 &1719291578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1719291569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c02b139c756428549987e05ef6d39049, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxLevel: 10
+  expPerLevelBase: 2
+  expCollector: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

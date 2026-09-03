@@ -176,3 +176,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 2
+  maxHealth: 20
+  contactDamage: 5
+  expGemPrefab: {fileID: 4429460681015783737, guid: 3b45d73b3b1c78d4782b3b762becaa78, type: 3}
