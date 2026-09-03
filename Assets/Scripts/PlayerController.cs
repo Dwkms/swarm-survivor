@@ -4,6 +4,9 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
 
+    public float MoveSpeed => moveSpeed;
+    public void SetMoveSpeed(float value) => moveSpeed = value;
+
     private Rigidbody2D rb;
     private Vector2 moveInput;
 

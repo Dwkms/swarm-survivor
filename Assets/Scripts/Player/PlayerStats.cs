@@ -10,6 +10,8 @@ public class PlayerStats : MonoBehaviour
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
 
+  
+
     private int currentHealth;
     private float invincibleTimer;
     private bool isDead;
@@ -27,6 +29,21 @@ public class PlayerStats : MonoBehaviour
         {
             invincibleTimer -= Time.deltaTime;
         }
+    }
+
+    // 최대 체력이 늘면 늘어난 만큼 회복시킨다.
+    // 안 그러면 카드를 골랐는데 체력바만 길어지고 실제로는 안 채워진다.
+    public void SetMaxHealth(int newMax)
+    {
+        int delta = newMax - maxHealth;
+        maxHealth = newMax;
+
+        if (delta > 0)
+        {
+            currentHealth += delta;
+        }
+
+        currentHealth = Mathf.Min(currentHealth, maxHealth);
     }
 
     // Enter가 아니라 Stay를 쓰는 이유:

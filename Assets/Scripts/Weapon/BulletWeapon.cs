@@ -41,6 +41,8 @@ public class BulletWeapon : MonoBehaviour
             fireAccumulator -= fireInterval;
         }
     }
+    public float FireInterval => fireInterval;
+    public void SetFireInterval(float value) => fireInterval = value;
 
     private void Fire(Transform target)
     {

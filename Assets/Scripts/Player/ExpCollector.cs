@@ -16,6 +16,7 @@ public class ExpCollector : MonoBehaviour
     {
         pickupRadius = radius;
     }
+    public float PickupRadius => pickupRadius;
 
     // 물리가 아니라 단순 거리 비교라 Update에 둔다.
     // FixedUpdate에 두면 물리 주기(초당 50회)에 묶여 오히려 반응이 늦어진다.
