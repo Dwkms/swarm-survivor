@@ -21,13 +21,15 @@ public class ExpCollector : MonoBehaviour
     // FixedUpdate에 두면 물리 주기(초당 50회)에 묶여 오히려 반응이 늦어진다.
     private void Update()
     {
-        // 제곱근을 생략하려고 반경도 제곱해서 비교한다.
         float sqrRadius = pickupRadius * pickupRadius;
         Vector2 myPos = transform.position;
 
-        // 뒤에서부터 순회하는 이유:
-        // TryCollect()가 목록에서 자기를 즉시 빼기 때문에 목록이 순회 도중 줄어든다.
-        // 앞에서부터 돌면 인덱스가 밀려 한 칸씩 건너뛴다.
+        // 이번 프레임에 주운 EXP를 모은다.
+        // 젬마다 이벤트를 쏘면 한 프레임에 50번이 불리는데, 받는 쪽이 하는 일은 같다.
+        // 합쳐서 한 번만 알리면 구독자가 늘어나도 비용이 커지지 않고,
+        // "한 번에 여러 레벨이 오르는" 경우도 한 호출 안에서 자연스럽게 처리된다.
+        int collectedThisFrame = 0;
+
         for (int i = ExpGem.All.Count - 1; i >= 0; i--)
         {
             ExpGem gem = ExpGem.All[i];
@@ -38,10 +40,13 @@ public class ExpCollector : MonoBehaviour
 
             if (gem.TryCollect(out int amount))
             {
-                // 누적과 레벨 계산은 LevelSystem이 한다.
-                // 수집기는 "주웠다"만 알린다.
-                OnExpCollected?.Invoke(amount);
+                collectedThisFrame += amount;
             }
+        }
+
+        if (collectedThisFrame > 0)
+        {
+            OnExpCollected?.Invoke(collectedThisFrame);
         }
     }
 
