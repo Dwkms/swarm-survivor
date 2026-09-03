@@ -10,7 +10,7 @@
 |---|---|
 | **저장소** | https://github.com/Dwkms/swarm-survivor |
 | **엔진** | Unity 6 (6000.0.82f1) · Universal 2D (URP) |
-| **상태** | 개발 중 (2026-09-02 기준) |
+| **상태** | 개발 중 (2026-09-03 기준) |
 
 > 에셋을 쓰지 않고 컬러 사각형으로 프로토타이핑합니다. 스프라이트 교체는 측정과 무관하므로 마지막에 합니다.
 
@@ -194,10 +194,12 @@ Trigger도 이 매트릭스를 따르므로, 꺼져 있으면 Trigger 콜백 자
 | `Projectile` | 완료 — 직선 이동, 적중 판정 (Lv1 기준) |
 | `BulletWeapon` | 완료 — 최근접 적 자동 조준 (Lv1 기준) |
 | `PerfMonitor` | 완료 — 프레임 시간, 구간 평균, 최악 프레임, GC Alloc, 이동 여부 표시 |
+| `ExpGem` · `ExpCollector` | 완료 — 적 사망 시 드랍, 거리 비교 픽업 (물리 미사용) |
+| `LevelSystem` | 완료 — EXP 누적, MAX 10, 레벨업 큐 |
+| `UpgradeManager` · `UpgradePanel` | 완료 — 카드 3장 선택, 3중첩, `timeScale = 0` |
 
 **아직 없는 것** — `GameManager` · `ObjectPool` · `PoolManager` · `WeaponManager` ·
-`WeaponBase` · `WeaponData(SO)` · `EnemyData(SO)` · `LevelSystem` · `UpgradeData(SO)` ·
-`UpgradeManager` · `ExpGem` · `ExpCollector` · `HUD` · `UpgradePanel` · `ResultPanel`
+`WeaponBase` · `WeaponData(SO)` · `EnemyData(SO)` · `UpgradeData(SO)` · `HUD` · `ResultPanel`
 
 **범위에서 제외한 것** — `PauseMenu`, `DamageText`. 일정상 잘라냈고, 성능 비교에는
 적·투사체·젬 3종이면 충분합니다.
@@ -216,6 +218,7 @@ Unity Hub에서 프로젝트를 열고 (**Unity 6000.0.82f1**), `Assets/Scenes`�
 | `F1` | 적 100마리 즉시 생성 (성능 측정용) |
 | `F3` | 성능 표시 on/off |
 | `F4` | 구간 평균·최악 프레임 리셋 |
+| `F5` | 살아있는 적 전체 즉사 (게임 로직 테스트용, 측정에는 쓰지 않음) |
 
 무기는 자동으로 발사됩니다.
 
