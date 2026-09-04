@@ -75,7 +75,7 @@
 관리 힙은 거의 늘지 않습니다. 따라서 **"풀링으로 GC를 줄인다"는 흔한 서사는 이 프로젝트에서
 성립하지 않습니다.** 풀링이 없애는 것은 GC가 아니라 네이티브 할당과 컴포넌트 초기화 비용입니다.
 
-측정 조건, 폐기한 결론, 판단이 바뀐 과정은 **[docs/PERF_LOG.md](./docs/PERF_LOG.md)** 에
+측정 조건, 폐기한 결론, 판단이 바뀐 과정은 **[PERF_LOG.md](./PERF_LOG.md)** 에
 시간순으로 남겼습니다.
 
 ## 측정을 위해 지키는 규칙
@@ -109,7 +109,7 @@
 **외부 패키지를 도입하지 않습니다.** Cinemachine, DOTween, 에셋스토어 모두 미사용입니다.
 이 프로젝트의 산출물은 카메라나 트윈이 아니라 성능 비교이고, 필요한 기능이 대부분 수십 줄로
 끝나서 패키지 학습 비용을 쓰지 않기로 했습니다. 판단 근거는
-[docs/DECISIONS.md](./docs/DECISIONS.md)에 있습니다.
+[DECISIONS.md](./DECISIONS.md)에 있습니다.
 
 ## 게임 사양
 
@@ -157,13 +157,20 @@ swarm-survivor/
 │  │  ├─ Level/     LevelSystem, UpgradeData(SO), UpgradeManager
 │  │  ├─ UI/        HUD, UpgradePanel, ResultPanel
 │  │  └─ Util/      ExpGem, PerfMonitor
-│  ├─ Prefabs/      Enemy, Projectile
+│  ├─ Prefabs/      Enemy, Projectile, ExpGem
 │  └─ Scenes/
-├─ docs/            성능 측정 기록, 설계 결정
-├─ README.md
-├─ UPDATELOG.md     날짜별 작업 내역
-└─ TROUBLESHOOTING.md
+└─ docs/
+   ├─ README.md            이 문서
+   ├─ UPDATELOG.md         날짜별 작업 내역
+   ├─ TROUBLESHOOTING.md   실제로 겪은 오류와 해결
+   ├─ PERF_LOG.md          성능 측정 기록
+   └─ DECISIONS.md         설계 결정과 이유
 ```
+
+> 문서를 저장소 루트가 아니라 `docs/`에 모았습니다. Unity 프로젝트 루트에는 `Assets`,
+> `Library`, `ProjectSettings` 등 엔진이 만드는 폴더가 이미 많아서, 문서까지 섞이면
+> 어느 것이 사람이 쓴 것인지 구분되지 않습니다. GitHub는 `docs/README.md`도 저장소
+> 첫 화면에 렌더링하므로 보이는 결과는 같습니다.
 
 ### Layer 구성
 
@@ -261,5 +268,5 @@ GUID로 참조하므로, 빠지면 다른 PC에서 참조가 전부 끊깁니다
 
 - [변경 이력](./UPDATELOG.md) — 날짜별로 무엇을 왜 했는지
 - [문제 해결](./TROUBLESHOOTING.md) — 실제로 겪은 오류와 해결 방법
-- [성능 측정 기록](./docs/PERF_LOG.md) — 측정 조건, 수치, 해석, **폐기한 결론**
-- [설계 결정 기록](./docs/DECISIONS.md) — 왜 그 선택을 했는지
+- [성능 측정 기록](./PERF_LOG.md) — 측정 조건, 수치, 해석, **폐기한 결론**
+- [설계 결정 기록](./DECISIONS.md) — 왜 그 선택을 했는지

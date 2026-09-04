@@ -349,7 +349,7 @@ Windows 빌드(non-development, VSync OFF)에서 다시 쟀습니다.**
 
 ### 성능 기준선 측정 — 결론이 두 번 뒤집혔습니다
 
-이날의 핵심입니다. 상세 수치와 해석은 [docs/PERF_LOG.md](./docs/PERF_LOG.md)에 있습니다.
+이날의 핵심입니다. 상세 수치와 해석은 [PERF_LOG.md](./PERF_LOG.md)에 있습니다.
 
 **1차 — "300마리는 부하가 아니다"**
 적 300마리에서 570fps(1.75ms)가 나왔습니다. 60fps 기준선(16.67ms)의 10분의 1입니다.
