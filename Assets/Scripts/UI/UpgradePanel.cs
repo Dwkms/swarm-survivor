@@ -77,7 +77,12 @@ public class UpgradePanel : MonoBehaviour
         upgradeManager.Apply(shown[index]);
 
         panelRoot.SetActive(false);
-        Time.timeScale = 1f;
+        // 게임이 이미 끝났으면 시간을 되돌리지 않는다.
+        // 결과 화면이 떠 있는데 적이 다시 움직이면 안 된다.
+        if (GameManager.Instance == null || GameManager.Instance.IsPlaying)
+        {
+            Time.timeScale = 1f;
+        }
 
         // 대기 중인 레벨업이 남아 있으면 여기서 다음 카드가 바로 뜬다.
         // 그때 HandleLevelUp이 timeScale을 다시 0으로 만든다.

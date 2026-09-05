@@ -10,7 +10,10 @@ public class PlayerStats : MonoBehaviour
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
 
-  
+    // 죽었다는 사실만 알린다. 그것이 패배인지는 GameManager가 판단한다.
+    public event System.Action OnDied;
+
+
 
     private int currentHealth;
     private float invincibleTimer;
@@ -84,9 +87,9 @@ public class PlayerStats : MonoBehaviour
         isDead = true;
         currentHealth = 0;
 
-        Debug.Log("플레이어 사망");
-
-        // 임시 처리다. 나중에 GameManager가 게임 정지와 ResultPanel 표시를 맡는다.
-        gameObject.SetActive(false);
+        // SetActive(false)를 하지 않는다.
+        // 결과 화면에서 플레이어가 사라져 있으면 어색하고,
+        // 게임 정지는 GameManager가 timeScale로 처리한다.
+        OnDied?.Invoke();
     }
 }

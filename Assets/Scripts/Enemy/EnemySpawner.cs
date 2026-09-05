@@ -78,6 +78,9 @@ public class EnemySpawner : MonoBehaviour
 
     private void HandleAutoSpawn()
     {
+        // 게임이 끝나면 스폰을 멈춘다.
+        if (GameManager.Instance != null && !GameManager.Instance.IsPlaying) return;
+
         if (playerTransform == null) return;
 
         // 활성 상한을 넘으면 시간도 모으지 않는다.
