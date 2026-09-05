@@ -13,6 +13,7 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button backButton;
+    [SerializeField] private Button quitButton;
 
     [Header("디스플레이 설정")]
     [SerializeField] private DisplaySettings displaySettings;
@@ -26,6 +27,7 @@ public class PauseMenu : MonoBehaviour
         resumeButton.onClick.AddListener(Resume);
         settingsButton.onClick.AddListener(OpenSettings);
         backButton.onClick.AddListener(BackToPause);
+        quitButton.onClick.AddListener(QuitGame);
 
         pauseMenuRoot.SetActive(false);
         settingsPanelRoot.SetActive(false);
@@ -82,6 +84,15 @@ public class PauseMenu : MonoBehaviour
         Time.timeScale = 0f;
     }
 
+    private void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
     private bool ValidateReferences()
     {
         bool isValid = true;
@@ -125,6 +136,12 @@ public class PauseMenu : MonoBehaviour
         if (backButton == null)
         {
             Debug.LogError("PauseMenu: Back Button is not assigned in the Inspector.", this);
+            isValid = false;
+        }
+
+        if (quitButton == null)
+        {
+            Debug.LogError("PauseMenu: Quit Button is not assigned in the Inspector.", this);
             isValid = false;
         }
 
