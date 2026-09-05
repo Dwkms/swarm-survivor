@@ -181,19 +181,22 @@ Windows 빌드 / **non-development** / **VSync OFF** / **창모드 1280×720** /
 
 ---
 
-## 7. 현재 상태 (2026-09-04 기준)
+## 7. 현재 상태 (2026-09-05 기준)
 
 ### 완료
 
 `CameraFollow` · `PlayerController` · `PlayerStats` · `Enemy` · `EnemySpawner` ·
 `Projectile` · `BulletWeapon` · `PerfMonitor` · `ExpGem` · `ExpCollector` ·
 `LevelSystem` · `UpgradeManager` · `UpgradePanel` · `ObjectPool` · `PooledObject` ·
-`PoolManager` · `GameManager` · `ResultPanel` · `HUD`
+`PoolManager` · `GameManager` · `ResultPanel` · `HUD` · `DisplaySettings` · `PauseMenu`
 
 **게임 루프가 성립합니다.** 적 스폰 → 자동 발사 → 사망 → 젬 → 레벨업 → 카드 선택 →
 5분 타이머 → 승패 → 결과 화면 → 재시작.
 
 **오브젝트 풀링 전후 측정이 완료됐습니다.** 결과는 [`docs/PERF_LOG.md`](docs/PERF_LOG.md).
+
+**ESC PauseMenu와 디스플레이 설정이 완료됐고 Windows Build에서 검증됐습니다.** 창 모드·`FullScreenWindow`·
+지원 해상도 변경과 해상도 변경 후 UI 레이아웃 유지를 확인했습니다.
 
 ### 미구현
 
@@ -201,7 +204,7 @@ Windows 빌드 / **non-development** / **VSync OFF** / **창모드 1280×720** /
 
 ### 범위에서 제외
 
-`PauseMenu` · `DamageText` — 일정상 잘라냈습니다. 다시 제안하지 마세요.
+`DamageText` — 일정상 잘라냈습니다. 다시 제안하지 마세요.
 
 ---
 
@@ -211,9 +214,8 @@ Windows 빌드 / **non-development** / **VSync OFF** / **창모드 1280×720** /
 
 | # | 작업 | 메모 |
 |---|---|---|
-| 1 | **HUD 정렬 마무리** | `HUD` 컨테이너를 화면 전체 stretch로. 경험치 바가 좌우 여백 없이 붙어야 함 |
-| 2 | **섹터 스폰** | 아래 별도 설명 |
-| 3 | **시간대별 스폰율** | `GameManager.ElapsedTime`으로 초당 4 / 8 / 14 전환 |
+| 1 | **섹터 스폰** | 아래 별도 설명 |
+| 2 | **시간대별 스폰율** | `GameManager.ElapsedTime`으로 초당 4 / 8 / 14 전환 |
 
 ### P1 — 되면
 
@@ -336,4 +338,4 @@ git push
 ## 12. 범위 밖 (제안 금지)
 
 보스 · 캐릭터 2종 · 세이브/로드 · 모바일 빌드 · 맵 추가 · 무기 진화 · 스토리 ·
-옵션 화면 · `PauseMenu` · `DamageText` · 코드 패키지 도입
+`DamageText` · 코드 패키지 도입

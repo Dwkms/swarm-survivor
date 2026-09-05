@@ -23,6 +23,9 @@
 - [Image에 Image Type / Fill Method 항목이 없음](#image에-image-type--fill-method-항목이-없음)
 - [UI가 화면 끝까지 늘어나지 않고 여백이 남음](#ui가-화면-끝까지-늘어나지-않고-여백이-남음)
 - [UI 글자와 바가 너무 작게 보임](#ui-글자와-바가-너무-작게-보임)
+- [Lv2에서 경험치 텍스트가 사라짐](#lv2에서-경험치-텍스트가-사라짐)
+- [HealthText가 잘림](#healthtext가-잘림)
+- [설정 Dropdown 글자가 흐리고 작음](#설정-dropdown-글자가-흐리고-작음)
 
 ## 스폰된 적이 원형으로 멈춰만 있음
 
@@ -678,3 +681,84 @@ Game 뷰 상단의 `Free Aspect`를 실제 빌드 해상도로 바꿔두면 에�
 배경 색이 계속 바뀌므로 흰 글씨만으로는 묻힙니다.
 **Add Component → UI → Effects → `Outline`**, Effect Color 검정, Effect Distance `(2, -2)`.
 한 번 설정하고 컴포넌트를 복사해 다른 텍스트에 붙이면 빠릅니다.
+
+## Lv2에서 경험치 텍스트가 사라짐
+
+> 2026-09-05 확인.
+
+### 증상
+
+HUD 좌측 상단 `LevelText`가 `Lv 2  100/200`까지는 보이다가, 101/200 부근부터 경험치 문자열이
+화면에서 보이지 않았습니다. 같은 `LevelSystem` 값을 쓰는 하단 `ExpBar`는 계속 정상적으로
+증가했습니다.
+
+### 원인
+
+경험치 데이터 문제가 아니라 Text 표시 영역 문제였습니다.
+
+`LevelText`의 RectTransform은 200x40이고 Font Size는 35인데, Horizontal Overflow가 `Wrap`,
+Vertical Overflow가 `Truncate`였습니다. 문자열이 폭을 넘으면서 줄바꿈되고, 두 번째 줄이 세로
+영역 안에 들어가지 못해 잘렸습니다.
+
+### 판별
+
+하단 `ExpBar`가 101/200 이후에도 정상적으로 증가했으므로 `LevelSystem` 데이터 문제는
+아니라고 볼 수 있었습니다. 같은 값을 표시하는 UI 중 Text만 사라졌기 때문에 `LevelText`의
+RectTransform과 Text 표시 설정을 먼저 확인했습니다.
+
+### 해결
+
+`LevelText`의 Horizontal Overflow를 `Overflow`로 변경합니다.
+
+Play 테스트에서 Lv2 경험치가 101/200을 넘어가도 좌측 상단 `LevelText`가 계속 정상 표시되고,
+하단 `ExpBar`도 기존처럼 동작하는 것을 확인했습니다.
+
+### 참고
+
+다른 Text 설정과 `HUD.cs`, `LevelSystem.cs`는 바꾸지 않습니다.
+
+## HealthText가 잘림
+
+> 2026-09-05 확인.
+
+### 증상
+
+HP가 100일 때 `HealthText`에 `100 /`만 표시되고 뒤쪽 `100`이 잘렸습니다.
+
+### 원인
+
+HealthText의 Text 영역을 넘어서는 문자열 표시가 허용되지 않아 텍스트가 잘렸습니다.
+
+### 판별
+
+HP 값 자체가 잘못된 것이 아니라 문자열의 마지막 숫자만 보이지 않았으므로 HealthText의
+Overflow 설정을 확인했습니다.
+
+### 해결
+
+HealthText의 Horizontal Overflow와 Vertical Overflow를 모두 `Overflow`로 변경합니다.
+Play 테스트에서 `100 / 100` 전체가 정상적으로 표시되는 것을 확인했습니다.
+
+## 설정 Dropdown 글자가 흐리고 작음
+
+> 2026-09-05 확인.
+
+### 증상
+
+화면 모드와 해상도 Dropdown의 선택 텍스트 및 펼친 목록 텍스트가 흐리고 작아 읽기 어려웠습니다.
+
+### 원인
+
+두 Legacy Dropdown의 Label과 `Template/Viewport/Content/Item/Item Label` Text가 작은 글자와
+낮은 가독성 설정으로 남아 있었습니다.
+
+### 판별
+
+DisplayModeDropdown과 ResolutionDropdown에서 선택값을 표시하는 Label, 목록 항목을 표시하는
+Item Label을 각각 확인했습니다.
+
+### 해결
+
+두 Dropdown의 Label과 Item Label을 Font Size `20`, Color `RGB 30,30,30 / Alpha 255`,
+Alignment `Middle Center`, Horizontal/Vertical Overflow `Overflow`로 변경합니다.
+Play 테스트에서 선택값과 펼친 목록이 명확하게 표시되는 것을 확인했습니다.

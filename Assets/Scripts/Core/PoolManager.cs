@@ -21,8 +21,6 @@ public class PoolManager : MonoBehaviour
     private readonly Dictionary<GameObject, ObjectPool> pools = new Dictionary<GameObject, ObjectPool>();
 
     // Play를 반복해도 static에 지난 판의 잔재가 남지 않도록 초기화한다.
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-
     private void Start()
     {
         if (!usePooling) return;
@@ -35,6 +33,8 @@ public class PoolManager : MonoBehaviour
             GetPool(entry.prefab).Prewarm(entry.count);
         }
     }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
     {
         instance = null;

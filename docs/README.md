@@ -217,11 +217,13 @@ Trigger도 이 매트릭스를 따르므로, 꺼져 있으면 Trigger 콜백 자
 | `GameManager` | 완료 — 5분 타이머, 승패 판정, 처치·점수 집계 |
 | `ResultPanel` | 완료 — 결과 표시, 재시작 |
 | `HUD` | 완료 — 체력·경험치·레벨·남은 시간·처치 |
+| `DisplaySettings` | 완료 — 창 모드·`FullScreenWindow`·지원 해상도 변경, Dropdown 동기화 |
+| `PauseMenu` | 완료 — ESC 일시정지, 설정 진입·복귀, Windows Build 검증 완료 |
 
 **아직 없는 것** — `WeaponManager` · `WeaponBase` · `WeaponData(SO)` · `EnemyData(SO)` ·
 `UpgradeData(SO)`. 적 3종·시간대별 스폰율·섹터 스폰이 남았습니다.
 
-**범위에서 제외한 것** — `PauseMenu`, `DamageText`. 일정상 잘라냈고, 성능 비교에는
+**범위에서 제외한 것** — `DamageText`. 일정상 잘라냈고, 성능 비교에는
 적·투사체·젬 3종이면 충분합니다.
 
 ## 실행 방법
