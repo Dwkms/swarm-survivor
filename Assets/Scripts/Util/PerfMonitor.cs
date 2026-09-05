@@ -12,6 +12,11 @@ public class PerfMonitor : MonoBehaviour
     [SerializeField] private KeyCode toggleKey = KeyCode.F3;  // 표시 on/off
     [SerializeField] private KeyCode resetKey = KeyCode.F4;  // 최악 프레임 리셋
 
+    // 해상도 설정
+    [SerializeField] private bool forceDisableVSync = true;
+    [SerializeField] private Vector2Int measurementResolution = new Vector2Int(1280, 720);
+
+
     // 화면에 그릴 문자열. 0.5초에 한 번만 새로 만든다.
     // 매 프레임 만들면 측정 도구 자신이 GC를 만들게 된다.
     private string cachedText = "";
@@ -49,6 +54,16 @@ public class PerfMonitor : MonoBehaviour
 
     private void Awake()
     {
+        if (forceDisableVSync)
+        {
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = -1;
+        }
+
+        // 창 모드로 고정한다.
+        // 해상도는 렌더 비용에 직접 영향을 주므로, 전/후 비교를 하려면
+        // 창 크기가 반드시 같아야 한다. 손으로 끌어 조절하면 조건이 흔들린다.
+        Screen.SetResolution(measurementResolution.x, measurementResolution.y, FullScreenMode.Windowed);
         // 배경용 1x1 반투명 검은 텍스처. Rect 크기로 늘려 그린다.
         // 게임 화면이 밝을 때 흰 글씨가 안 보이는 것을 막는다.
         backgroundTex = new Texture2D(1, 1);
