@@ -5,6 +5,7 @@ public class Enemy : MonoBehaviour
 {
     [Header("이동")]
     [SerializeField] private float moveSpeed = 2f;
+    [SerializeField] private float approachSpreadRadius = 0.75f;
 
     [Header("전투")]
     [SerializeField] private int maxHealth = 20;      // 슬라임 기준
@@ -23,6 +24,7 @@ public class Enemy : MonoBehaviour
 
     private Rigidbody2D rb;
     private Transform target;
+    private Vector2 approachOffset;
 
     private int currentHealth;
 
@@ -53,9 +55,10 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public void SetTarget(Transform newTarget)
+    public void SetTarget(Transform newTarget, bool useApproachSpread)
     {
         target = newTarget;
+        approachOffset = useApproachSpread ? CreateApproachOffset() : Vector2.zero;
     }
 
     private void FixedUpdate()
@@ -66,8 +69,16 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        Vector2 dir = ((Vector2)target.position - rb.position).normalized;
+        Vector2 targetPosition = (Vector2)target.position + approachOffset;
+        Vector2 dir = (targetPosition - rb.position).normalized;
         rb.linearVelocity = dir * moveSpeed;
+    }
+
+    private Vector2 CreateApproachOffset()
+    {
+        float angle = Random.Range(0f, Mathf.PI * 2f);
+        float distance = Random.Range(approachSpreadRadius * 0.5f, approachSpreadRadius);
+        return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
     }
 
     // 총알이 호출한다.
@@ -118,6 +129,7 @@ public class Enemy : MonoBehaviour
         currentHealth = maxHealth;
         isDead = false;
         target = null;
+        approachOffset = Vector2.zero;
 
         // 반납 직전의 속도가 남아 있으면 되살아난 첫 프레임에 엉뚱한 방향으로 튄다.
         if (rb != null)

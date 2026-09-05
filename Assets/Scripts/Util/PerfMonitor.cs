@@ -47,7 +47,7 @@ public class PerfMonitor : MonoBehaviour
     private long lastBurstAllocBytes;
     private long prevManagedBytes;
 
-    private bool visible = true;
+    private bool visible = false;
 
     private GUIStyle style;
     private Texture2D backgroundTex;

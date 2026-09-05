@@ -7,8 +7,16 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("스폰 설정")]
     [SerializeField] private float spawnsPerSecond = 4f;   // 0~1분 구간 기준값
+    [SerializeField] private float midSpawnsPerSecond = 8f;
+    [SerializeField] private float lateSpawnsPerSecond = 14f;
+    [SerializeField] private bool autoSpawnEnabled = true;
     [SerializeField] private float spawnRadius = 14f;      // 화면 대각선(12.3)보다 크게
     [SerializeField] private int maxActiveEnemies = 400;   // 이 수를 넘으면 스폰 일시 중단
+    [Header("Sector Rotation")]
+    [SerializeField] private float sectorWidthDegrees = 180f;
+    [SerializeField] private float sectorRotationInterval = 5f;
+    [SerializeField] private float sectorRotationStepDegrees = 90f;
+    [SerializeField] private float sectorStartDegrees = 0f;
 
     [Header("디버그")]
     [SerializeField] private int burstCount = 100;         // F1 한 번에 만들 마릿수
@@ -19,6 +27,8 @@ public class EnemySpawner : MonoBehaviour
     // 지금까지 흘러간 시간을 모아두는 통.
     // 한 마리 뽑을 만큼 차면 뽑고, 그만큼 통에서 뺀다.
     private float spawnAccumulator;
+    // Game time controls this accumulator, so rotation pauses with PauseMenu and UpgradePanel.
+    private float sectorRotationAccumulator;
 
     // 현재 살아있는 적의 수. Enemy 쪽에서 켜지고 꺼질 때마다 갱신한다.
     // 매번 FindObjectsByType으로 세면 O(n) 탐색이 반복돼 스폰이 느려진다.
@@ -33,6 +43,11 @@ public class EnemySpawner : MonoBehaviour
         if (player != null)
         {
             playerTransform = player.transform;
+        }
+
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("[EnemySpawner] GameManager.Instance를 찾지 못했습니다.", this);
         }
         
         // 씬을 다시 시작해도 static 값이 남아있으면 안 된다.
@@ -55,7 +70,8 @@ public class EnemySpawner : MonoBehaviour
         {
             for (int i = 0; i < burstCount; i++)
             {
-                SpawnOne();
+                // F1 keeps the full-circle distribution so the performance baseline remains comparable.
+                SpawnOne(GetRandomPointOnFullCircle(), false);
             }
             Debug.Log($"[F1] {burstCount}마리 스폰. 현재 활성: {ActiveEnemyCount}");
         }
@@ -79,18 +95,32 @@ public class EnemySpawner : MonoBehaviour
     private void HandleAutoSpawn()
     {
         // 게임이 끝나면 스폰을 멈춘다.
-        if (GameManager.Instance != null && !GameManager.Instance.IsPlaying) return;
+        if (GameManager.Instance == null || !GameManager.Instance.IsPlaying) return;
 
         if (playerTransform == null) return;
 
         // 활성 상한을 넘으면 시간도 모으지 않는다.
         // 여기서 return 하지 않고 통만 채워두면, 상한이 풀리는 순간
         // 밀린 물량이 한꺼번에 터져 프레임이 튄다.
+        // Automatic gameplay uses a rotating sector so an open escape direction remains.
+        sectorRotationAccumulator += Time.deltaTime;
+        while (sectorRotationAccumulator >= sectorRotationInterval)
+        {
+            sectorStartDegrees = Mathf.Repeat(
+                sectorStartDegrees + sectorRotationStepDegrees,
+                360f);
+            sectorRotationAccumulator -= sectorRotationInterval;
+        }
+
+        if (!autoSpawnEnabled) return;
         if (ActiveEnemyCount >= maxActiveEnemies) return;
+
+        float currentSpawnRate = GetCurrentSpawnRate();
+        if (currentSpawnRate <= 0f) return;
 
         spawnAccumulator += Time.deltaTime;
 
-        float interval = 1f / spawnsPerSecond;   // 초당 4마리 → 0.25초에 한 마리
+        float interval = 1f / currentSpawnRate;
 
         // while인 이유: 프레임이 크게 튀어 deltaTime이 0.25초를 넘긴 경우,
         // if면 한 마리만 나오고 나머지가 증발한다.
@@ -99,16 +129,23 @@ public class EnemySpawner : MonoBehaviour
         // 스폰량이 프레임레이트에 끌려다니면 측정 조건이 오염된다.
         while (spawnAccumulator >= interval)
         {
-            SpawnOne();
+            SpawnOne(GetRandomPointInCurrentSector(), true);
             spawnAccumulator -= interval;
         }
     }
 
-    private void SpawnOne()
+    private float GetCurrentSpawnRate()
+    {
+        float elapsed = GameManager.Instance.ElapsedTime;
+
+        if (elapsed < 60f) return spawnsPerSecond;
+        if (elapsed < 180f) return midSpawnsPerSecond;
+        return lateSpawnsPerSecond;
+    }
+
+    private void SpawnOne(Vector3 spawnPos, bool useApproachSpread)
     {
         if (enemyPrefab == null || playerTransform == null) return;
-
-        Vector3 spawnPos = GetRandomPointOnCircle();
 
         // 지금은 의도적으로 Instantiate를 쓴다.
         // 나중에 풀링으로 바꾸고 이 시점의 수치와 비교하는 것이 이 프로젝트의 산출물이다.
@@ -120,24 +157,33 @@ public class EnemySpawner : MonoBehaviour
         Enemy enemy = enemyObj.GetComponent<Enemy>();
         if (enemy != null)
         {
-            enemy.SetTarget(playerTransform);
+            enemy.SetTarget(playerTransform, useApproachSpread);
         }
     }
 
-    private Vector3 GetRandomPointOnCircle()
+    private Vector3 GetRandomPointOnFullCircle()
     {
-        // 0 ~ 2π 사이의 각도를 뽑아 삼각함수로 원 위의 한 점을 만든다.
-        // Random.insideUnitCircle은 원 "내부"라 화면 안에 적이 튀어나올 수 있다.
         float angle = Random.Range(0f, Mathf.PI * 2f);
+        return GetSpawnPointFromAngle(angle);
+    }
 
+    private Vector3 GetRandomPointInCurrentSector()
+    {
+        float angleDegrees = Random.Range(
+            sectorStartDegrees,
+            sectorStartDegrees + sectorWidthDegrees);
+        float angle = angleDegrees * Mathf.Deg2Rad;
+        return GetSpawnPointFromAngle(angle);
+    }
+
+    private Vector3 GetSpawnPointFromAngle(float angle)
+    {
         Vector3 offset = new Vector3(
             Mathf.Cos(angle) * spawnRadius,
             Mathf.Sin(angle) * spawnRadius,
             0f
         );
 
-        // 카메라가 아니라 플레이어를 기준으로 삼는다.
-        // 카메라는 SmoothDamp로 뒤따라오므로 기준으로 쓰면 스폰 거리가 미세하게 흔들린다.
         return playerTransform.position + offset;
     }
 }

@@ -202,7 +202,7 @@ Box2D는 각 Collider의 AABB를 실제보다 크게(fat AABB) 만들어 트리�
 같은 머신 상태에서 측정됩니다.
 
 **조건** — Windows 빌드 / non-development / VSync OFF / **창모드 1280×720** / 데스크탑 /
-`spawnsPerSecond` 0 / `BulletWeapon` OFF / `PlayerStats.maxHealth` 99999
+`autoSpawnEnabled` false / `BulletWeapon` OFF / `PlayerStats.maxHealth` 99999
 
 | 지표 | 무엇을 재나 | 읽는 값 |
 |---|---|---|
@@ -321,7 +321,7 @@ C의 OFF 값이 튀는 이유를 "**`Destroy`는 프레임 끝에 지연 처리�
 
 | 항목 | 측정용 값 | 원래 값 | 상태 |
 |---|---|---|---|
-| `EnemySpawner.spawnsPerSecond` | 0 | 4 | **측정 완료 → 원복** |
+| `EnemySpawner.autoSpawnEnabled` | false | true | **측정 완료 → 원복** |
 | Player의 `BulletWeapon` | OFF | ON | **측정 완료 → 원복** |
 | `SleepProbe` (F2) | 임시 진단용 | — | **삭제** |
 | Quality → V Sync Count | Don't Sync | — | **유지** (측정 조건) |
