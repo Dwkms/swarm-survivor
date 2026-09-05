@@ -50,7 +50,7 @@ public class BulletWeapon : MonoBehaviour
         // 넘긴 뒤에는 총알이 스스로 직진할 뿐, 적을 따라가지 않는다(유도탄 아님).
         Vector2 dir = (Vector2)(target.position - transform.position);
 
-        GameObject obj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+        GameObject obj = PoolManager.Spawn(projectilePrefab, transform.position, Quaternion.identity);
 
         Projectile projectile = obj.GetComponent<Projectile>();
         if (projectile != null)

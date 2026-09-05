@@ -55,7 +55,8 @@ public class ExpGem : MonoBehaviour
 
         // 지금은 의도적으로 Destroy를 쓴다.
         // 풀링 전환 시 이 줄이 "풀에 반납"으로 바뀐다.
-        Destroy(gameObject);
+        // 현재 폴링 전환
+        PoolManager.Despawn(gameObject);
         return true;
     }
 }

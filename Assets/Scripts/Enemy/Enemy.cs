@@ -32,11 +32,6 @@ public class Enemy : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-
-        // 체력 초기화는 Awake에서 한다.
-        // Instantiate 직후 Start가 오기 전에 총알을 맞을 수도 있는데,
-        // 그때 currentHealth가 0이면 태어나자마자 죽는다.
-        currentHealth = maxHealth;
     }
 
     private void Start()
@@ -93,8 +88,10 @@ public class Enemy : MonoBehaviour
 
         DropExpGem();
 
-        // 지금은 의도적으로 Destroy를 쓴다.
-        Destroy(gameObject);
+        // Destroy가 아니라 풀로 반납한다.
+        // Destroy는 프레임 끝에 처리되지만 Despawn은 즉시 비활성화되고,
+        // OnDisable에서 활성 카운터도 바로 줄어든다.
+        PoolManager.Despawn(gameObject);
     }
 
     private void DropExpGem()
@@ -103,11 +100,25 @@ public class Enemy : MonoBehaviour
 
         // 젬의 EXP 양은 젬 프리팹이 갖고 있다.
         // 적 종류별로 1/2/3을 다르게 주는 것은 EnemyData(SO)를 만들 때 처리한다.
-        Instantiate(expGemPrefab, transform.position, Quaternion.identity);
+        PoolManager.Spawn(expGemPrefab, transform.position, Quaternion.identity);
     }
 
+    // 풀에서 꺼낼 때마다 상태를 초기화한다.
+    // Instantiate는 항상 새 객체라 필드가 기본값이지만,
+    // 풀은 이전 사용의 상태를 그대로 물려준다.
+    // 여기서 되돌리지 않으면 isDead가 true인 채로 되살아난다.
     private void OnEnable()
     {
+        currentHealth = maxHealth;
+        isDead = false;
+        target = null;
+
+        // 반납 직전의 속도가 남아 있으면 되살아난 첫 프레임에 엉뚱한 방향으로 튄다.
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+
         EnemySpawner.RegisterEnemy();
     }
 

@@ -176,7 +176,7 @@ public class PerfMonitor : MonoBehaviour
             $"now     {avgMs:F2} ms   ({fps:F0} fps)   [{state}]\n" +
             $"AVG     {sessionAvg:F2} ms   ({sessionFrames} frames)\n" +
             $"worst   {worstMs:F2} ms\n" +
-            $"enemies {EnemySpawner.ActiveEnemyCount}\n" +
+            $"enemies {EnemySpawner.ActiveEnemyCount}   {PoolManager.GetStats()}\n" +
             $"burst   {burst}\n" +
             $"elapsed {elapsed:F1} s     (F3 ¼û±è / F4 ¸®¼Â)";
     }

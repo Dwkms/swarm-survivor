@@ -34,7 +34,7 @@ public class EnemySpawner : MonoBehaviour
         {
             playerTransform = player.transform;
         }
-
+        
         // 씬을 다시 시작해도 static 값이 남아있으면 안 된다.
         // static은 씬 로드와 무관하게 유지되기 때문에 명시적으로 0으로 되돌린다.
         ActiveEnemyCount = 0;
@@ -109,7 +109,8 @@ public class EnemySpawner : MonoBehaviour
 
         // 지금은 의도적으로 Instantiate를 쓴다.
         // 나중에 풀링으로 바꾸고 이 시점의 수치와 비교하는 것이 이 프로젝트의 산출물이다.
-        GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
+        // 현재 풀링으로 바꿈
+        GameObject enemyObj = PoolManager.Spawn(enemyPrefab, spawnPos, Quaternion.identity);
 
         // 적이 스스로 FindGameObjectWithTag를 부르지 않도록 대상을 직접 넘긴다.
         // 100마리 동시 생성 시 Find 100번이면 그 자체로 프레임 스파이크가 된다.
