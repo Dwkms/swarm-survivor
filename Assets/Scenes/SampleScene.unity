@@ -727,7 +727,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefab: {fileID: 4017933818163956792, guid: 4413b31b3aa08614b805d7af8413ecab, type: 3}
-  spawnsPerSecond: 0
+  spawnsPerSecond: 4
   spawnRadius: 14
   maxActiveEnemies: 400
   burstCount: 100
@@ -1238,7 +1238,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54e4c0f48fd64324296de3c155161e1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 99999
+  maxHealth: 100
   invincibleDuration: 0.5
 --- !u!114 &1719291576
 MonoBehaviour:
@@ -1247,7 +1247,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1719291569}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cc077727474a9b44a85284f4a96a51ce, type: 3}
   m_Name: 
