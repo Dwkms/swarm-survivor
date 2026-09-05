@@ -9,6 +9,7 @@ public class Enemy : MonoBehaviour
     [Header("전투")]
     [SerializeField] private int maxHealth = 20;      // 슬라임 기준
     [SerializeField] private int contactDamage = 5;   // 몸에 닿았을 때 주는 피해
+    [SerializeField] private int scoreValue = 10;   // 슬라임 기준
 
     [Header("드랍")]
     [SerializeField] private GameObject expGemPrefab;
@@ -85,6 +86,11 @@ public class Enemy : MonoBehaviour
     private void Die()
     {
         isDead = true;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddKill(scoreValue);
+        }
 
         DropExpGem();
 

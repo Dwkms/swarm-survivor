@@ -15,6 +15,9 @@ public class GameManager : MonoBehaviour
     public float RemainingTime => Mathf.Max(0f, gameDuration - ElapsedTime);
     public bool IsPlaying { get; private set; }
 
+    public int KillCount { get; private set; }
+    public int Score { get; private set; }
+
     // true = 승리(5분 생존), false = 패배(체력 0)
     public event Action<bool> OnGameEnd;
 
@@ -25,22 +28,6 @@ public class GameManager : MonoBehaviour
         if (playerStats == null)
         {
             playerStats = FindAnyObjectByType<PlayerStats>();
-        }
-    }
-
-    private void OnEnable()
-    {
-        if (playerStats != null)
-        {
-            playerStats.OnDied += HandlePlayerDied;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (playerStats != null)
-        {
-            playerStats.OnDied -= HandlePlayerDied;
         }
     }
 
@@ -71,6 +58,30 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        if (playerStats != null)
+        {
+            playerStats.OnDied += HandlePlayerDied;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (playerStats != null)
+        {
+            playerStats.OnDied -= HandlePlayerDied;
+        }
+    }
+
+    // 적이 죽을 때 호출한다.
+    public void AddKill(int score)
+    {
+        KillCount++;
+        Score += score;
+    }
+
+
     private void HandlePlayerDied()
     {
         EndGame(false);
@@ -92,6 +103,12 @@ public class GameManager : MonoBehaviour
     public string GetRemainingTimeText()
     {
         int total = Mathf.CeilToInt(RemainingTime);
+        return $"{total / 60}:{total % 60:00}";
+    }
+    // 결과 화면용. 생존한 시간을 "M:SS"로.
+    public string GetElapsedTimeText()
+    {
+        int total = Mathf.FloorToInt(ElapsedTime);
         return $"{total / 60}:{total % 60:00}";
     }
 }
