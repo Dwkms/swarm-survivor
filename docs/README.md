@@ -1,287 +1,175 @@
 # Swarm Survivor
 
-**적을 대량으로 생성하는 환경에서 오브젝트 풀링 전후의 성능 차이를 측정하기 위한 Unity 2D 프로젝트입니다.**
+Unity 6로 만든 2D Survivor 프로젝트입니다. 이 프로젝트의 목적은 게임 기능을 많이 만드는 것이 아니라,
+**문제 발견 → 가설 → 구현 → 측정 → 결과 분석 → 판단 → 기록**의 흐름으로 성능 최적화를 설명하는 것입니다.
 
-2D 탑다운 뱀서라이크의 형태를 빌리고 있지만 목표는 재미있는 게임이 아니라 **최적화 과정의 증명**입니다.
-먼저 `Instantiate`/`Destroy`로 구현해 기준선을 확보하고, 오브젝트 풀링으로 교체하면서 전후를 측정한
-기록이 이 프로젝트의 산출물입니다.
-
-| | |
-|---|---|
-| **저장소** | https://github.com/Dwkms/swarm-survivor |
-| **엔진** | Unity 6 (6000.0.82f1) · Universal 2D (URP) |
-| **상태** | 개발 중 (2026-09-04 기준) |
-
-> 에셋을 쓰지 않고 컬러 사각형으로 프로토타이핑합니다. 스프라이트 교체는 측정과 무관하므로 마지막에 합니다.
+적을 대량으로 생성하는 환경에서 `Instantiate`/`Destroy`와 오브젝트 풀링을 같은 조건으로 비교하고,
+풀링이 실제로 줄이는 비용과 줄이지 못하는 비용을 분리해 기록했습니다.
 
 ## 목차
 
-- [무엇을 만들고 있나](#무엇을-만들고-있나)
-- [측정 결과 요약](#측정-결과-요약)
-- [측정을 위해 지키는 규칙](#측정을-위해-지키는-규칙)
-- [기술 구성](#기술-구성)
-- [게임 사양](#게임-사양)
-- [프로젝트 구조](#프로젝트-구조)
-- [구현 상태](#구현-상태)
-- [실행 방법](#실행-방법)
-- [성능 측정 방법](#성능-측정-방법)
-- [문서](#문서)
+- [Project Overview](#project-overview)
+- [Tech Stack](#tech-stack)
+- [Core Features](#core-features)
+- [Performance Optimization](#performance-optimization)
+- [Benchmark Method](#benchmark-method)
+- [Key Design Decisions](#key-design-decisions)
+- [Controls](#controls)
+- [Third-Party Assets](#third-party-assets)
+- [Run / Setup](#run--setup)
+- [Project Status](#project-status)
+- [Documentation](#documentation)
 
-## 무엇을 만들고 있나
+## Project Overview
 
-"적이 많으면 느려진다"는 말은 흔하지만, **무엇이 느려지는지**는 잘 나뉘어 설명되지 않습니다.
-이 프로젝트는 부하를 세 가지로 분리해서 각각 측정합니다.
+Swarm Survivor는 5분 생존형 탑다운 게임 루프 위에 성능 측정 도구를 구성한 포트폴리오 프로젝트입니다.
+측정 중 결론이 여러 번 뒤집힌 과정을 숨기지 않고, 가설을 기각하거나 측정 방법을 수정한 이유까지 문서로 남겼습니다.
 
-| 부하 | 정의 | 오브젝트 풀링이 개선하는가 |
-|---|---|---|
-| 존재 | 오브젝트가 씬에 있는 것만으로 드는 비용 | 아니다 |
-| **이동** | 활성 오브젝트가 매 프레임 물리로 움직이는 비용 | **아니다** |
-| 생성·파괴 | `Instantiate`/`Destroy` 자체 비용과 GC | **그렇다** |
+핵심 질문은 다음과 같습니다.
 
-풀링은 세 번째만 줄입니다. 그래서 이 저장소가 남기려는 것은 "풀링을 적용했더니 빨라졌다"가 아니라
-**어느 부하가 얼마나 컸고, 풀링이 그중 무엇을 얼마나 줄였는지**입니다.
+- 적이 많아졌을 때 어떤 부하가 커지는가?
+- 오브젝트 풀링은 그 부하 중 어디까지 개선하는가?
+- 공정한 비교를 위해 어떤 조건을 통제해야 하는가?
 
-## 측정 결과 요약
+## Tech Stack
 
-측정 환경 — **Windows 빌드 / non-development / VSync OFF / 데스크탑 /
-컬러 사각형 단일 머티리얼 / `Instantiate`·`Destroy` 방식**
+| 영역            | 사용 기술                                     |
+| --------------- | --------------------------------------------- |
+| Engine          | Unity 6 (6000.0.82f1)                         |
+| Language        | C#                                            |
+| Render Pipeline | Universal 2D / URP                            |
+| Physics         | Rigidbody2D, Physics2D Layer Collision Matrix |
+| Version Control | Git / GitHub                                  |
 
-### 이동 중 적 마릿수별 프레임 시간
+## Core Features
 
-| 적 마릿수 | 평균 | 최악 프레임 | 최악 / 평균 |
-|---|---|---|---|
-| 200 | 1.38ms | 5.05ms | 3.7배 |
-| 400 | 1.75ms | **14.89ms** | 8.5배 |
-| 600 | 2.55ms | **31.24ms** | 12.2배 |
-| 900 | 6.89ms | **68.73ms** | 10.0배 |
+- 5분 생존, 체력 0 패배, 결과 화면 및 재시작
+- WASD 이동과 자동 투사체 전투
+- EXP 젬 획득, 레벨업, 3개 업그레이드 카드 선택
+- 자동 적 스폰: 180도 회전 섹터, 5초 간격 90도 회전
+- 시간대별 스폰율: 0~1분 4/s, 1~3분 8/s, 3분 이후 14/s
+- 자동 스폰 활성 적 상한 400
+- 자동 게임플레이 Enemy의 개인별 접근 목표 Offset으로 과도한 한 점 중첩 완화
+- 적·투사체·EXP 젬 Object Pooling과 ON/OFF 비교 경로
+- HUD, 성능 모니터, PauseMenu, 화면 모드·해상도 설정
+- PauseMenu의 Resume, Settings, Game Quit 및 Result/Upgrade UI 우선순위 처리
 
-60fps 기준선은 **16.67ms**입니다. 평균은 900마리에서도 여유가 있지만
-**최악 프레임이 400마리부터 평균의 10배 안팎으로 벌어집니다.** 체감 버벅임은 여기서 나옵니다.
+## Performance Optimization
 
-비용은 마릿수에 선형이 아닙니다. 마릿수가 4.5배(200→900) 늘 때 최악 프레임은 13.6배
-늘어나 **대략 n^1.7** 로 증가합니다. 오브젝트 하나당 드는 비용이라면 정확히 4.5배여야 합니다.
-초선형이라는 것은 비용이 개수가 아니라 **오브젝트 쌍(pair)** 에서 나온다는 뜻입니다.
+### Object Pooling
 
-### 오브젝트 풀링 전후 비교
+`PoolManager.usePooling` 스위치로 같은 빌드·같은 세션에서 `Instantiate`/`Destroy`와 풀링 경로를
+전환합니다. 풀은 `Stack`으로 관리하며, 풀 대상의 재사용 상태는 `OnEnable`에서 초기화합니다.
 
-같은 빌드 안에 전환 스위치를 넣어 두 방식을 **같은 코드, 같은 세션**에서 측정했습니다.
-1회차는 워밍업이 섞이므로 버리고 2·3회차를 기록합니다.
+실제 측정에서는 적, 투사체, EXP 젬을 모두 풀링 대상으로 전환했습니다.
 
-| 지표 | `Instantiate`/`Destroy` | 오브젝트 풀링 | 변화 |
-|---|---|---|---|
-| 생성 프레임 (적 100개) | 1.24 / 1.93 ms | 0.93 / 2.90 ms | 중앙값 **약 40% 감소** |
-| 이동 평균 (900마리) | 3.73 / 3.58 ms | 3.42 ms | **변화 없음** |
-| 파괴+생성 최악 프레임 | 15.10 / 16.17 ms | **11.72 / 11.81 ms** | **약 25% 감소** |
+아래 `/` 구분값은 워밍업 1회차를 제외한 **2·3회차 기록**입니다. 단일 값은 `PERF_LOG.md`에
+한 값만 기록된 경우 그대로 표기했습니다. 지표 이름은 `PERF_LOG.md`의 측정 항목을 그대로 사용했습니다.
 
-**이동 비용은 예측대로 전혀 바뀌지 않았습니다.** 대조군으로 넣은 지표이고,
-움직이지 않았다는 사실이 나머지 두 지표의 차이가 진짜라는 근거가 됩니다.
+| PERF_LOG 측정 지표          | OFF (`Instantiate`/`Destroy`) |        ON (풀링) | PERF_LOG 기록           |
+| --------------------------- | ----------------------------: | ---------------: | ----------------------- |
+| A. 생성 (`F1`, Enemy 100개) |                1.24 / 1.93 ms |   0.93 / 2.90 ms | 중앙값 기준 약 40% 감소 |
+| B. 이동 AVG (Enemy 900마리) |                3.73 / 3.58 ms |          3.42 ms | 변화 없음               |
+| C. 파괴+생성 worst (`F5`)   |              15.10 / 16.17 ms | 11.72 / 11.81 ms | 약 25% 감소             |
 
-**최악 프레임의 11.7ms는 풀링 후에도 남았습니다.** 5ms 아래로 떨어질 것으로 예측했지만
-빗나갔습니다. 남은 비용은 메모리 할당이 아니라 **900개 오브젝트를 `SetActive`로 껐다 켜면서
-물리 프록시가 재등록되는 데서** 나옵니다. 풀링이 없애는 것과 없애지 못하는 것의 경계입니다.
+`F1`으로 Enemy 100개를 생성하는 기준선에서는 GC Alloc이 **0 KB**로 측정됐습니다.
+따라서 이 프로젝트는 “풀링으로 GC가 크게 감소했다”라고 주장하지 않습니다.
 
-`F1`으로 적 100마리를 한 프레임에 생성할 때 **GC Alloc은 두 방식 모두 0KB**였습니다.
-Unity의 GameObject·Component는 대부분 네이티브 메모리에 잡히고 관리 힙은 거의 늘지 않습니다.
-따라서 **"풀링으로 GC를 줄인다"는 흔한 서사는 이 프로젝트에서 측정으로 뒷받침되지 않습니다.**
+### Performance Conclusion
 
-측정 조건, 폐기한 지표, 기각한 가설, 판단이 바뀐 과정은 **[PERF_LOG.md](./PERF_LOG.md)** 에
-시간순으로 남겼습니다.
+풀링은 생성 프레임과 대량 파괴·생성이 겹치는 최악 프레임의 일부를 줄였습니다. 반면 이미 활성화된
+Enemy의 이동·Physics 비용은 줄이지 못했습니다. 즉, 풀링은 생성·파괴 비용에 대한 선택이지 모든
+프레임 비용을 없애는 해결책은 아닙니다.
 
-## 측정을 위해 지키는 규칙
+이동 중 400마리에서 `worst`는 14.89ms였고, 60fps 프레임 예산 초과 예상 지점은
+400~600마리 측정 결과를 기반으로 한 추정치인 약 430마리입니다. 이 결과를 근거로 자동 스폰의 활성 Enemy 상한은
+**400**으로 유지했습니다.
 
-성능을 재는 프로젝트에서는 코드가 프레임레이트에 영향을 받는 순간 측정 조건이 오염됩니다.
-아래 규칙은 그래서 정한 것입니다.
+900마리 이동 비용의 초선형 증가와 물리 브로드페이즈의 관계는 유력 가설로만 기록했습니다.
+검증하지 않은 병목 원인을 사실로 단정하지 않았습니다.
 
-- **프레임레이트에 따라 결과가 달라지는 코드를 쓰지 않습니다.**
-  `Lerp(a, b, t * deltaTime)` 형태를 금지하고 `SmoothDamp` 또는 명시적 속도 제어를 씁니다.
-- **스폰 주기와 발사 주기는 시간 누적 방식**으로 처리합니다.
-  프레임이 튀어도 초당 마릿수와 초당 데미지가 유지되어야 비교가 성립합니다.
-- **이동은 `FixedUpdate`, 따라가는 로직은 `LateUpdate`** 에 둡니다.
-- **물리로 움직이는 오브젝트는 `Interpolate = Interpolate`.**
-- **최적화를 미리 하지 않습니다.** 개선 폭을 숫자로 말하려면 기준선이 필요합니다.
-- **기준선은 빌드에서 잽니다.** 에디터에서는 EditorLoop가 프레임 시간의 86%를 차지해
-  게임 비용을 가립니다.
-- **모든 측정치에 조건을 함께 기록합니다.** 특히 *플레이어 이동 여부*.
-  조건을 빼면 같은 마릿수에서 몇 배씩 차이 나는 값이 나옵니다.
+## Benchmark Method
 
-## 기술 구성
+성능 기준선은 Unity Editor가 아니라 다음 조건의 Windows Build에서 측정했습니다.
 
-| 영역 | 사용 기술 |
-|---|---|
-| 엔진 | Unity 6 (6000.0.82f1) |
-| 렌더 파이프라인 | Universal 2D (URP) |
-| 입력 | Active Input Handling = Both, 구식 `Input.GetAxisRaw` |
-| 물리 | Rigidbody2D (`linearVelocity`), Layer Collision Matrix |
-| 계측 | 자작 `PerfMonitor` (프레임 시간·최악 프레임·GC Alloc), Unity Profiler |
-| 형상 관리 | Git · GitHub |
+- Windows Build / non-development / VSync OFF / 창모드 1280×720
+- 동일 데스크탑, 동일 게임 조건
+- `autoSpawnEnabled = false`, `BulletWeapon` OFF, `PlayerStats.maxHealth = 99999`
+- 첫 실행 워밍업을 제외하고 2·3회차 기록
+- FPS 대신 frame time(ms)의 `AVG`와 `worst` 중심으로 기록
+- 60fps frame budget: **16.67ms**
 
-**외부 패키지를 도입하지 않습니다.** Cinemachine, DOTween, 에셋스토어 모두 미사용입니다.
-이 프로젝트의 산출물은 카메라나 트윈이 아니라 성능 비교이고, 필요한 기능이 대부분 수십 줄로
-끝나서 패키지 학습 비용을 쓰지 않기로 했습니다. 판단 근거는
-[DECISIONS.md](./DECISIONS.md)에 있습니다.
+`PerfMonitor`는 `Time.unscaledDeltaTime`으로 프레임 시간을 수집합니다. `now`는 직전 0.5초 평균인
+참고값이고, `F4` 이후 누적한 `AVG`와 `worst`를 기록값으로 사용합니다.
 
-## 게임 사양
+상세 측정 조건, 이상치, 기각한 가설은 [PERF_LOG.md](./PERF_LOG.md)에 남겨두었습니다.
 
-1회 플레이 5분. 5분 생존 시 클리어, 체력 0이면 실패. 맵 1종.
+## Key Design Decisions
 
-**플레이어** — HP 100 / 이동속도 5 / 픽업 반경 1.5 / 피격 무적 0.5초 / 시작 무기 불릿 Lv1
+- **물리 이동은 FixedUpdate**: Rigidbody2D 속도는 `linearVelocity`로 지정합니다.
+- **카메라는 LateUpdate + SmoothDamp**: 물리 이동 이후를 추적하고, 카메라 Z는 고정합니다.
+- **Enemy ↔ Enemy 충돌 비활성화**: 수백 Enemy의 충돌 쌍과 플레이어 포위벽을 피합니다.
+- **접근 목표 Offset**: 자동 스폰 Enemy만 플레이어 중심 주변의 작은 Offset을 사용하며, 주변 탐색이나 Physics Query 기반 separation은 추가하지 않습니다.
+- **ExpGem은 물리 없이 거리 비교로 획득**: 대량 젬의 Collider/Rigidbody 비용을 피합니다.
+- **Pool은 Stack, 재사용 초기화는 OnEnable**: 방금 반납한 오브젝트의 재사용과 풀링 상태 초기화를 단순하게 유지합니다.
+- **게임 시간과 측정 시간을 분리**: 게임 진행은 `Time.deltaTime`, 성능 측정은 `Time.unscaledDeltaTime`을 사용합니다.
+- **자동 스폰은 회전 섹터**: 스폰 수·반경은 유지하면서 플레이어가 빠져나갈 빈 방향을 만듭니다.
+- **F1은 전체 원주를 유지**: 게임플레이 스폰과 분리해 기존 성능 계측 기준선을 보존합니다.
 
-**적** — 프리팹 1개 + ScriptableObject 3종으로 구현합니다.
+설계 선택의 근거와 버린 대안은 [DECISIONS.md](./DECISIONS.md)에서 확인할 수 있습니다.
 
-| 적 | HP | 이속 | 공격 | EXP / 점수 | 등장 |
-|---|---|---|---|---|---|
-| 슬라임 | 20 | 2.0 | 접촉 5 | 1 / 10 | 0:00~ |
-| 고블린궁수 | 15 | 1.5 | 원거리 8 (사거리 6, 간격 2.0) | 2 / 20 | 1:00~ |
-| 오크전사 | 60 | 2.5 | 접촉 15 | 3 / 30 | 3:00~ |
+## Controls
 
-**스폰** — 0~1분 초당 4 / 1~3분 초당 8 / 3~5분 초당 14. 화면 밖 원주에 랜덤 배치.
-동시 활성 400 초과 시 스폰 일시 중단.
+### Gameplay
 
-> 활성 상한 400은 측정으로 확인한 값입니다. 최악 프레임이 60fps 기준선을 넘는 지점이
-> 약 430마리이고, 400은 그 아래입니다.
-
-**레벨** — MAX 10. 레벨 n에서 n+1로 가는 데 필요한 EXP는 `100 × n`.
-
-**무기** — 불릿만 만듭니다. 최근접 적에게 직선 투사체.
-
-| 레벨 | 데미지 | 간격 | 발수 |
-|---|---|---|---|
-| Lv1 | 10 | 0.80초 | 1 |
-| Lv2 | 14 | 0.60초 | 1 |
-| Lv3 | 18 | 0.50초 | 2 (10도 분산) |
-
-**스탯 카드** (각 3중첩) — 이동속도 +15% / 발사간격 -12% / 픽업반경 +30% / 최대체력 +20.
-레벨업 시 3장 제시, 1장 선택. 선택 중 `Time.timeScale = 0`.
-
-## 프로젝트 구조
-
-```text
-swarm-survivor/
-├─ Assets/
-│  ├─ Scripts/
-│  │  ├─ Core/      GameManager, CameraFollow, ObjectPool, PoolManager
-│  │  ├─ Player/    PlayerController, PlayerStats, WeaponManager, ExpCollector
-│  │  ├─ Weapon/    WeaponBase, BulletWeapon, Projectile, WeaponData(SO)
-│  │  ├─ Enemy/     EnemySpawner, Enemy, EnemyData(SO)
-│  │  ├─ Level/     LevelSystem, UpgradeData(SO), UpgradeManager
-│  │  ├─ UI/        HUD, UpgradePanel, ResultPanel
-│  │  └─ Util/      ExpGem, PerfMonitor
-│  ├─ Prefabs/      Enemy, Projectile, ExpGem
-│  └─ Scenes/
-└─ docs/
-   ├─ README.md            이 문서
-   ├─ UPDATELOG.md         날짜별 작업 내역
-   ├─ TROUBLESHOOTING.md   실제로 겪은 오류와 해결
-   ├─ PERF_LOG.md          성능 측정 기록
-   └─ DECISIONS.md         설계 결정과 이유
-```
-
-> 문서를 저장소 루트가 아니라 `docs/`에 모았습니다. Unity 프로젝트 루트에는 `Assets`,
-> `Library`, `ProjectSettings` 등 엔진이 만드는 폴더가 이미 많아서, 문서까지 섞이면
-> 어느 것이 사람이 쓴 것인지 구분되지 않습니다. GitHub는 `docs/README.md`도 저장소
-> 첫 화면에 렌더링하므로 보이는 결과는 같습니다.
-
-### Layer 구성
-
-| Layer | 용도 |
-|---|---|
-| `Player` | 플레이어 |
-| `Enemy` | 적 |
-| `Projectile` | 투사체 |
-
-**Layer Collision Matrix에서 해제한 조합** — `Enemy ↔ Enemy`, `Projectile ↔ Projectile`,
-`Projectile ↔ Player`.
-
-`Enemy ↔ Enemy` 해제가 가장 중요합니다. 적 수백 마리가 서로 밀치면 충돌 쌍이 급격히 늘어납니다.
-**측정 조건을 처음부터 고정해야 하므로 적을 만들기 전에 먼저 설정했습니다.**
-Trigger도 이 매트릭스를 따르므로, 꺼져 있으면 Trigger 콜백 자체가 오지 않습니다.
-
-## 구현 상태
-
-날짜별 진행은 [UPDATELOG.md](./UPDATELOG.md)를 보세요.
-
-| 스크립트 | 상태 |
-|---|---|
-| `CameraFollow` | 완료 — LateUpdate + SmoothDamp, z 고정 |
-| `PlayerController` | 완료 — WASD 이동 |
-| `PlayerStats` | HP·피격 무적만 구현. 이동속도·픽업 스탯 미구현 |
-| `Enemy` | 완료 — 추적 이동, 체력, 접촉 피해 (슬라임 수치 하드코딩) |
-| `EnemySpawner` | 기본 완료 — 원주 스폰, 활성 상한, F1 대량 스폰. **시간대별 스폰율 미적용** |
-| `Projectile` | 완료 — 직선 이동, 적중 판정 (Lv1 기준) |
-| `BulletWeapon` | 완료 — 최근접 적 자동 조준 (Lv1 기준) |
-| `PerfMonitor` | 완료 — 프레임 시간, 구간 평균, 최악 프레임, GC Alloc, 이동 여부 표시 |
-| `ExpGem` · `ExpCollector` | 완료 — 적 사망 시 드랍, 거리 비교 픽업 (물리 미사용) |
-| `LevelSystem` | 완료 — EXP 누적, MAX 10, 레벨업 큐 |
-| `UpgradeManager` · `UpgradePanel` | 완료 — 카드 3장 선택, 3중첩, `timeScale = 0` |
-| `ObjectPool` · `PoolManager` | 완료 — 적·투사체·젬 풀링, 전환 스위치, Prewarm |
-| `GameManager` | 완료 — 5분 타이머, 승패 판정, 처치·점수 집계 |
-| `ResultPanel` | 완료 — 결과 표시, 재시작 |
-| `HUD` | 완료 — 체력·경험치·레벨·남은 시간·처치 |
-| `DisplaySettings` | 완료 — 창 모드·`FullScreenWindow`·지원 해상도 변경, Dropdown 동기화 |
-| `PauseMenu` | 완료 — ESC 일시정지, 설정 진입·복귀, Windows Build 검증 완료 |
-
-**아직 없는 것** — `WeaponManager` · `WeaponBase` · `WeaponData(SO)` · `EnemyData(SO)` ·
-`UpgradeData(SO)`. 적 3종·시간대별 스폰율·섹터 스폰이 남았습니다.
-
-**범위에서 제외한 것** — `DamageText`. 일정상 잘라냈고, 성능 비교에는
-적·투사체·젬 3종이면 충분합니다.
-
-## 실행 방법
-
-```bash
-git clone https://github.com/Dwkms/swarm-survivor.git
-```
-
-Unity Hub에서 프로젝트를 열고 (**Unity 6000.0.82f1**), `Assets/Scenes`의 메인 씬을 연 뒤 ▶를 누릅니다.
-
-| 조작 | 동작 |
-|---|---|
-| `W` `A` `S` `D` | 이동 |
-| `F1` | 적 100마리 즉시 생성 (성능 측정용) |
-| `F3` | 성능 표시 on/off |
-| `F4` | 구간 평균·최악 프레임 리셋 |
-| `F5` | 살아있는 적 전체 즉사 (게임 로직 테스트용, 측정에는 쓰지 않음) |
+| 입력            | 동작                                                    |
+| --------------- | ------------------------------------------------------- |
+| `W` `A` `S` `D` | 플레이어 이동                                           |
+| `ESC`           | PauseMenu 열기/닫기, SettingsPanel에서 PauseMenu로 복귀 |
+| PauseMenu 버튼  | Resume, Settings, Game Quit                             |
 
 무기는 자동으로 발사됩니다.
 
-### 두 PC를 오갈 때
+### Developer / Benchmark
 
-```bash
-git pull      # 작업 시작 전 반드시
-git push      # 작업 종료 후
-```
+| 입력 | 동작                                                                   |
+| ---- | ---------------------------------------------------------------------- |
+| `F1` | Enemy 100마리 즉시 생성. 360도 전체 원주를 유지하는 성능 계측용 버스트 |
+| `F3` | 기본 숨김 상태의 성능 오버레이 표시/숨김                               |
+| `F4` | 성능 모니터의 `AVG`, `worst`, burst 측정값 리셋                        |
+| `F5` | 살아있는 Enemy 전체 처치. 게임 로직 테스트용                           |
 
-**Unity에서 `Ctrl+S`로 씬을 저장한 뒤에 커밋합니다.** GameObject 추가와 Inspector의 컴포넌트
-설정은 `.unity` 파일에만 기록되므로, 저장을 빠뜨리면 다른 PC에서 컴포넌트가 비어 있습니다.
-`.meta` 파일도 반드시 함께 커밋합니다. Unity는 에셋을 파일 이름이 아니라 `.meta` 안의
-GUID로 참조하므로, 빠지면 다른 PC에서 참조가 전부 끊깁니다.
+## Third-Party Assets
 
-## 성능 측정 방법
+게임 로직, 성능 측정, 최적화 코드는 직접 구현했습니다. 시각 아트에는 아래 외부 에셋을 사용합니다.
 
-`F1`은 디버그 기능이 아니라 **계측 도구**입니다. 100마리를 한 프레임에 생성해
-`Instantiate` 방식과 풀링 방식을 같은 조건으로 비교하는 데 씁니다.
+- Asset: **Undead Survivor Asset Pack**
+- Creator: Goldmetal
+- Source: Unity Asset Store
+- License: Standard Unity Asset Store EULA
 
-`PerfMonitor`가 화면에 표시하는 값입니다.
+The original Asset Store files are not included in this repository.
 
-| 항목 | 의미 |
-|---|---|
-| `now` | 직전 0.5초 창의 평균. **참고용** — 읽는 시점에 따라 값이 크게 달라집니다 |
-| `AVG` | `F4` 리셋 이후 누적 평균. **기록에 쓰는 값** |
-| `worst` | `F4` 리셋 이후 최악 프레임. **체감 버벅임은 여기서 나옵니다** |
-| `burst` | `F1` 실행 프레임의 시간과 GC Alloc. **풀링 전후 비교의 핵심 지표** |
-| `[MOVING]` / `[IDLE]` | 이동 여부. 측정 조건이 화면에 함께 남습니다 |
+`Assets/Undead Survivor/`와 해당 `.meta` 파일은 `.gitignore`로 제외되어 있습니다.
 
-측정할 때 반드시 함께 기록할 조건입니다.
+## Run / Setup
 
-- **에디터가 아니라 빌드** (non-development, VSync OFF)
-- 플레이어 **이동 여부**
-- 적 마릿수, `BulletWeapon` ON/OFF, 스폰 중인지 여부
-- 스폰 후 **12초 이상 대기** (적이 반경 14에서 도달하는 데 7초)
-- **어느 PC인지** — 다른 PC의 전·후 수치는 비교할 수 없습니다
+1. Unity Hub에서 Unity **6000.0.82f1**로 프로젝트를 엽니다.
+2. 시각 에셋이 필요한 환경에서는 Undead Survivor Asset Pack을 별도로 Import합니다.
+3. `Assets/Scenes/SampleScene.unity`를 엽니다.
+4. Play를 실행합니다.
 
-## 문서
+## Project Status
 
-- [변경 이력](./UPDATELOG.md) — 날짜별로 무엇을 왜 했는지
-- [문제 해결](./TROUBLESHOOTING.md) — 실제로 겪은 오류와 해결 방법
-- [성능 측정 기록](./PERF_LOG.md) — 측정 조건, 수치, 해석, **폐기한 결론**
-- [설계 결정 기록](./DECISIONS.md) — 왜 그 선택을 했는지
+핵심 게임 루프, 성능 측정·풀링 비교 경로, PauseMenu와 디스플레이 설정이 구현돼 있습니다.
+Unity Play 및 Windows Build에서 게임 진행, PauseMenu, 화면 모드·해상도 변경, HUD/UI 레이아웃을 검증했습니다.
+
+이 프로젝트의 중심 산출물은 “풀링을 적용했다”는 사실이 아니라, **측정 조건을 통제하고 실제 결과로
+주장을 제한한 과정**입니다.
+
+## Documentation
+
+- [PERF_LOG.md](./PERF_LOG.md) — 측정 조건, 실제 수치, 이상치와 기각한 가설
+- [DECISIONS.md](./DECISIONS.md) — 설계 선택의 이유와 트레이드오프
+- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — 실제 증상, 원인, 판별, 해결
+- [UPDATELOG.md](./UPDATELOG.md) — 날짜별 구현 및 검증 기록
