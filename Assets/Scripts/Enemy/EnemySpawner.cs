@@ -6,9 +6,6 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private GameObject enemyPrefab;
 
     [Header("스폰 설정")]
-    [SerializeField] private float spawnsPerSecond = 4f;   // 0~1분 구간 기준값
-    [SerializeField] private float midSpawnsPerSecond = 8f;
-    [SerializeField] private float lateSpawnsPerSecond = 14f;
     [SerializeField] private bool autoSpawnEnabled = true;
     [SerializeField] private float spawnRadius = 14f;      // 화면 대각선(12.3)보다 크게
     [SerializeField] private int maxActiveEnemies = 400;   // 이 수를 넘으면 스폰 일시 중단
@@ -21,6 +18,9 @@ public class EnemySpawner : MonoBehaviour
     [Header("디버그")]
     [SerializeField] private int burstCount = 100;         // F1 한 번에 만들 마릿수
     [SerializeField] private KeyCode killAllKey = KeyCode.F5;  // F5 누를시 몹 전멸
+
+    private const float GrowthDuration = 240f;
+    private const float FinalRushDuration = 60f;
 
     private Transform playerTransform;
 
@@ -63,6 +63,8 @@ public class EnemySpawner : MonoBehaviour
 
     private void HandleDebugInput()
     {
+        if (!PerfMonitor.BenchmarkToolsEnabled) return;
+
         // F1: 성능 측정용 대량 스폰.
         // 이건 장난 기능이 아니라, 나중에 Instantiate 방식과 풀링 방식을
         // "같은 조건"으로 비교하기 위한 계측 버튼이다.
@@ -124,7 +126,7 @@ public class EnemySpawner : MonoBehaviour
 
         // while인 이유: 프레임이 크게 튀어 deltaTime이 0.25초를 넘긴 경우,
         // if면 한 마리만 나오고 나머지가 증발한다.
-        // while이면 밀린 만큼 전부 뽑아내 "초당 4마리"가 프레임레이트와 무관하게 지켜진다.
+        // while이면 밀린 만큼 전부 뽑아내 목표 스폰율이 프레임레이트와 무관하게 지켜진다.
         // 적 300마리에서 프레임이 떨어지는 상황을 일부러 만드는 프로젝트라
         // 스폰량이 프레임레이트에 끌려다니면 측정 조건이 오염된다.
         while (spawnAccumulator >= interval)
@@ -138,9 +140,16 @@ public class EnemySpawner : MonoBehaviour
     {
         float elapsed = GameManager.Instance.ElapsedTime;
 
-        if (elapsed < 60f) return spawnsPerSecond;
-        if (elapsed < 180f) return midSpawnsPerSecond;
-        return lateSpawnsPerSecond;
+        if (elapsed < GrowthDuration)
+        {
+            // 초반 4분은 젬 회수와 업그레이드 성장을 위한 완만한 증가 구간이다.
+            float growthT = Mathf.Clamp01(elapsed / GrowthDuration);
+            return Mathf.Lerp(3f, 7f, growthT);
+        }
+
+        // 마지막 1분은 10/s에서 시작해 18/s까지 오르는 Final Rush다.
+        float finalRushT = Mathf.Clamp01((elapsed - GrowthDuration) / FinalRushDuration);
+        return Mathf.Lerp(10f, 18f, finalRushT);
     }
 
     private void SpawnOne(Vector3 spawnPos, bool useApproachSpread)

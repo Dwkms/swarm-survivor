@@ -7,7 +7,9 @@ public enum UpgradeType
     FireInterval,   // 발사간격 -12%
     PickupRadius,   // 픽업반경 +30%
     MaxHealth,      // 최대체력 +20
-    RadialShot      // 8방향 방사형 사격 해금
+    RadialShot,     // 8방향 방사형 사격 해금
+    BasicWeaponDamage,
+    RadialWeaponDamage
 }
 
 // Inspector에서 값을 채우기 위한 데이터 묶음.
@@ -99,6 +101,27 @@ public class UpgradeManager : MonoBehaviour
         return count;
     }
 
+    // Inspector 옵션 순서대로 현재 적용된 강화만 복사한다.
+    // 선택 이력은 따로 저장하지 않고, 실제 stack 상태만 UI에 제공한다.
+    public void GetAppliedUpgrades(List<UpgradeOption> buffer)
+    {
+        if (buffer == null)
+        {
+            Debug.LogError("[UpgradeManager] 적용된 업그레이드를 받을 buffer가 비어 있습니다.", this);
+            return;
+        }
+
+        buffer.Clear();
+
+        for (int i = 0; i < options.Count; i++)
+        {
+            if (options[i].currentStack > 0)
+            {
+                buffer.Add(options[i]);
+            }
+        }
+    }
+
     public void Apply(UpgradeOption option)
     {
         if (option == null) return;
@@ -137,6 +160,14 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.RadialShot:
                 radialWeapon.Unlock();
                 break;
+
+            case UpgradeType.BasicWeaponDamage:
+                bulletWeapon.SetDamageMultiplier(1f + 0.20f * stack);
+                break;
+
+            case UpgradeType.RadialWeaponDamage:
+                radialWeapon.SetDamageMultiplier(1f + 0.20f * stack);
+                break;
         }
     }
 
@@ -146,6 +177,12 @@ public class UpgradeManager : MonoBehaviour
         {
             // 1회 획득형 무기는 실제 해금 상태를 후보 조건으로 사용한다.
             return radialWeapon != null && !radialWeapon.IsUnlocked;
+        }
+
+        if (option.type == UpgradeType.RadialWeaponDamage)
+        {
+            // 방사형 무기를 얻기 전에는 강화 카드만 먼저 나올 수 없다.
+            return radialWeapon != null && radialWeapon.IsUnlocked && option.currentStack < option.maxStack;
         }
 
         return option.currentStack < option.maxStack;

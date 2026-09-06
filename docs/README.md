@@ -1,16 +1,14 @@
 # Swarm Survivor
 
-Unity 6로 만든 2D Survivor 프로젝트입니다. 이 프로젝트의 목적은 게임 기능을 많이 만드는 것이 아니라,
-**문제 발견 → 가설 → 구현 → 측정 → 결과 분석 → 판단 → 기록**의 흐름으로 성능 최적화를 설명하는 것입니다.
-
-적을 대량으로 생성하는 환경에서 `Instantiate`/`Destroy`와 오브젝트 풀링을 같은 조건으로 비교하고,
-풀링이 실제로 줄이는 비용과 줄이지 못하는 비용을 분리해 기록했습니다.
+Unity 6로 만든 2D Survivor 프로토타입입니다. 기능 개수보다 **문제 발견 → 가설 → 구현 → 측정 → 결과 분석 → 판단 → 기록**의 성능 최적화 과정을 보여주는 포트폴리오를 목표로 합니다.
 
 ## 목차
 
 - [Project Overview](#project-overview)
+- [Gameplay](#gameplay)
 - [Tech Stack](#tech-stack)
 - [Core Features](#core-features)
+- [How to Play](#how-to-play)
 - [Performance Optimization](#performance-optimization)
 - [Benchmark Method](#benchmark-method)
 - [Key Design Decisions](#key-design-decisions)
@@ -22,154 +20,116 @@ Unity 6로 만든 2D Survivor 프로젝트입니다. 이 프로젝트의 목적�
 
 ## Project Overview
 
-Swarm Survivor는 5분 생존형 탑다운 게임 루프 위에 성능 측정 도구를 구성한 포트폴리오 프로젝트입니다.
-측정 중 결론이 여러 번 뒤집힌 과정을 숨기지 않고, 가설을 기각하거나 측정 방법을 수정한 이유까지 문서로 남겼습니다.
+5분 생존 루프 위에서 Object Pooling의 효과와 한계를 같은 조건으로 비교했습니다. 대량 Enemy 환경에서 생성·반환, 이동, Burst 상황을 분리해 frame time(ms)의 `AVG`와 `worst`를 기록하고, 측정 결과가 설계 판단으로 이어지는 과정을 문서화했습니다.
 
-핵심 질문은 다음과 같습니다.
+## Gameplay
 
-- 적이 많아졌을 때 어떤 부하가 커지는가?
-- 오브젝트 풀링은 그 부하 중 어디까지 개선하는가?
-- 공정한 비교를 위해 어떤 조건을 통제해야 하는가?
+[Gameplay 영상](../swarm_survivor_%EC%98%81%EC%83%81.mp4)
 
 ## Tech Stack
 
-| 영역            | 사용 기술                                     |
-| --------------- | --------------------------------------------- |
-| Engine          | Unity 6 (6000.0.82f1)                         |
-| Language        | C#                                            |
-| Render Pipeline | Universal 2D / URP                            |
-| Physics         | Rigidbody2D, Physics2D Layer Collision Matrix |
-| Version Control | Git / GitHub                                  |
+| 영역 | 사용 기술 |
+| --- | --- |
+| Engine | Unity 6 (6000.0.82f1) |
+| Language | C# |
+| Render Pipeline | Universal 2D / URP |
+| Physics | Rigidbody2D, Physics2D Layer Collision Matrix |
+| Version Control | Git / GitHub |
 
 ## Core Features
 
-- 5분 생존, 체력 0 패배, 결과 화면 및 재시작
-- WASD 이동과 자동 투사체 전투
-- EXP 젬 획득, 레벨업, 3개 업그레이드 카드 선택
-- 자동 적 스폰: 180도 회전 섹터, 5초 간격 90도 회전
-- 시간대별 스폰율: 0~1분 4/s, 1~3분 8/s, 3분 이후 14/s
-- 자동 스폰 활성 적 상한 400
-- 자동 게임플레이 Enemy의 개인별 접근 목표 Offset으로 과도한 한 점 중첩 완화
-- 적·투사체·EXP 젬 Object Pooling과 ON/OFF 비교 경로
-- HUD, 성능 모니터, PauseMenu, 화면 모드·해상도 설정
-- PauseMenu의 Resume, Settings, Game Quit 및 Result/Upgrade UI 우선순위 처리
+5분 생존, 자동 조준 3발 Shotgun과 해금형 8방향 Radial Weapon, EXP·레벨업·3장 Upgrade 선택, 회전형 섹터 Spawn과 Final Rush, Pooling, HUD·Pause·Display/Audio Settings, 비정지형 Upgrade 현황 Overlay를 구현했습니다. 상세 기능과 구현 이유는 [상세 기능 및 구현 설명](FEATURES.md)에서 확인할 수 있습니다.
+
+## How to Play
+
+1. `WASD` 또는 방향키로 이동합니다. 기본 무기는 최근접 Enemy를 자동 조준해 발사합니다.
+2. Enemy가 남긴 EXP Gem을 회수해 레벨업합니다.
+3. 레벨업마다 제시되는 3장의 Upgrade 카드 중 하나를 선택합니다.
+4. `U`로 현재 획득한 Upgrade와 Stack을 확인할 수 있습니다. 이 Overlay를 열어도 게임은 계속 진행됩니다.
+5. 0~4분은 성장 구간이며 Spawn Rate가 3/s에서 7/s까지 증가합니다. 마지막 1분은 10/s에서 18/s까지 증가하는 Final Rush입니다.
+6. 5분 생존 시 승리하며, HP가 0이 되면 실패합니다.
 
 ## Performance Optimization
 
 ### Object Pooling
 
-`PoolManager.usePooling` 스위치로 같은 빌드·같은 세션에서 `Instantiate`/`Destroy`와 풀링 경로를
-전환합니다. 풀은 `Stack`으로 관리하며, 풀 대상의 재사용 상태는 `OnEnable`에서 초기화합니다.
+`PoolManager.usePooling` 스위치로 같은 Build와 같은 입력 조건에서 Instantiate/Destroy와 Stack 기반 Pooling을 비교했습니다. Pool 객체의 재사용 상태는 `OnEnable`에서 초기화하며, Enemy·Projectile·EXP Gem이 기존 Spawn/Despawn 경로를 그대로 사용합니다.
 
-실제 측정에서는 적, 투사체, EXP 젬을 모두 풀링 대상으로 전환했습니다.
+아래 `/` 값은 첫 실행 워밍업을 제외한 2·3회차 기록입니다. 항목명과 수치는 [PERF_LOG.md](PERF_LOG.md)의 원본 기록을 그대로 사용했습니다.
 
-아래 `/` 구분값은 워밍업 1회차를 제외한 **2·3회차 기록**입니다. 단일 값은 `PERF_LOG.md`에
-한 값만 기록된 경우 그대로 표기했습니다. 지표 이름은 `PERF_LOG.md`의 측정 항목을 그대로 사용했습니다.
+| PERF_LOG 측정 지표 | OFF (`Instantiate`/`Destroy`) | ON (Pooling) | PERF_LOG 기록 |
+| --- | ---: | ---: | --- |
+| A. 생성 (`F1`, Enemy 100) | 1.24 / 1.93 ms | 0.93 / 2.90 ms | 중앙값 기준 약 40% 감소 |
+| B. 이동 AVG (Enemy 900) | 3.73 / 3.58 ms | 3.42 ms | 변화 없음 |
+| C. 제거+생성 worst (`F5`) | 15.10 / 16.17 ms | 11.72 / 11.81 ms | 약 25% 감소 |
 
-| PERF_LOG 측정 지표          | OFF (`Instantiate`/`Destroy`) |        ON (풀링) | PERF_LOG 기록           |
-| --------------------------- | ----------------------------: | ---------------: | ----------------------- |
-| A. 생성 (`F1`, Enemy 100개) |                1.24 / 1.93 ms |   0.93 / 2.90 ms | 중앙값 기준 약 40% 감소 |
-| B. 이동 AVG (Enemy 900마리) |                3.73 / 3.58 ms |          3.42 ms | 변화 없음               |
-| C. 파괴+생성 worst (`F5`)   |              15.10 / 16.17 ms | 11.72 / 11.81 ms | 약 25% 감소             |
-
-`F1`으로 Enemy 100개를 생성하는 기준선에서는 GC Alloc이 **0 KB**로 측정됐습니다.
-따라서 이 프로젝트는 “풀링으로 GC가 크게 감소했다”라고 주장하지 않습니다.
+`F1` Enemy 100 Spawn 조건의 GC Alloc은 0 KB로 측정됐습니다. 따라서 Pooling으로 GC가 크게 감소했다고 주장하지 않고, 생성 프레임과 대량 제거·생성 구간의 비용 일부를 줄였다는 결과만 기록합니다.
 
 ### Performance Conclusion
 
-풀링은 생성 프레임과 대량 파괴·생성이 겹치는 최악 프레임의 일부를 줄였습니다. 반면 이미 활성화된
-Enemy의 이동·Physics 비용은 줄이지 못했습니다. 즉, 풀링은 생성·파괴 비용에 대한 선택이지 모든
-프레임 비용을 없애는 해결책은 아닙니다.
+Pooling은 생성 비용과 대량 Destroy/Spawn이 겹치는 구간의 worst frame time을 줄였습니다. 반면 Pooling이 이미 활성화된 Enemy의 이동·Physics 비용까지 제거하지는 못했으며, Enemy 900 이동 AVG에서는 뚜렷한 개선이 없었습니다.
 
-이동 중 400마리에서 `worst`는 14.89ms였고, 60fps 프레임 예산 초과 예상 지점은
-400~600마리 측정 결과를 기반으로 한 추정치인 약 430마리입니다. 이 결과를 근거로 자동 스폰의 활성 Enemy 상한은
-**400**으로 유지했습니다.
-
-900마리 이동 비용의 초선형 증가와 물리 브로드페이즈의 관계는 유력 가설로만 기록했습니다.
-검증하지 않은 병목 원인을 사실로 단정하지 않았습니다.
+이 결과를 바탕으로 활성 Enemy 상한은 400으로 유지했습니다. 60fps frame budget(16.67ms)을 넘을 가능성은 400/600 Enemy 측정 사이에서 추정한 약 430마리 지점으로 기록돼 있으며, 직접 실측값과 추정값을 구분합니다. 현재 밸런스 변경 이후의 성능 결과로 과거 수치를 재해석하지 않습니다.
 
 ## Benchmark Method
 
-성능 기준선은 Unity Editor가 아니라 다음 조건의 Windows Build에서 측정했습니다.
+공식 성능 측정은 Unity Editor가 아닌 Windows non-development Build에서 수행했습니다.
 
-- Windows Build / non-development / VSync OFF / 창모드 1280×720
-- 동일 데스크탑, 동일 게임 조건
+- Windows Build / non-development / VSync OFF / Windowed 1280×720
+- 동일 PC, 동일 게임 조건
 - `autoSpawnEnabled = false`, `BulletWeapon` OFF, `PlayerStats.maxHealth = 99999`
-- 첫 실행 워밍업을 제외하고 2·3회차 기록
-- FPS 대신 frame time(ms)의 `AVG`와 `worst` 중심으로 기록
-- 60fps frame budget: **16.67ms**
+- 첫 실행 워밍업 제외, 2·3회차 기록
+- FPS 대신 frame time(ms)의 `AVG`와 `worst` 중심 기록
+- 60fps frame budget: 16.67ms
 
-`PerfMonitor`는 `Time.unscaledDeltaTime`으로 프레임 시간을 수집합니다. `now`는 직전 0.5초 평균인
-참고값이고, `F4` 이후 누적한 `AVG`와 `worst`를 기록값으로 사용합니다.
-
-상세 측정 조건, 이상치, 기각한 가설은 [PERF_LOG.md](./PERF_LOG.md)에 남겨두었습니다.
+`PerfMonitor`는 `Time.unscaledDeltaTime`으로 측정합니다. 일반 배포에서는 Benchmark Tools를 OFF로 두며, 도구 사용법은 [FEATURES.md의 Benchmark Tools](FEATURES.md#11-benchmark-tools)를 참고합니다.
 
 ## Key Design Decisions
 
-- **물리 이동은 FixedUpdate**: Rigidbody2D 속도는 `linearVelocity`로 지정합니다.
-- **카메라는 LateUpdate + SmoothDamp**: 물리 이동 이후를 추적하고, 카메라 Z는 고정합니다.
-- **Enemy ↔ Enemy 충돌 비활성화**: 수백 Enemy의 충돌 쌍과 플레이어 포위벽을 피합니다.
-- **접근 목표 Offset**: 자동 스폰 Enemy만 플레이어 중심 주변의 작은 Offset을 사용하며, 주변 탐색이나 Physics Query 기반 separation은 추가하지 않습니다.
-- **ExpGem은 물리 없이 거리 비교로 획득**: 대량 젬의 Collider/Rigidbody 비용을 피합니다.
-- **Pool은 Stack, 재사용 초기화는 OnEnable**: 방금 반납한 오브젝트의 재사용과 풀링 상태 초기화를 단순하게 유지합니다.
-- **게임 시간과 측정 시간을 분리**: 게임 진행은 `Time.deltaTime`, 성능 측정은 `Time.unscaledDeltaTime`을 사용합니다.
-- **자동 스폰은 회전 섹터**: 스폰 수·반경은 유지하면서 플레이어가 빠져나갈 빈 방향을 만듭니다.
-- **F1은 전체 원주를 유지**: 게임플레이 스폰과 분리해 기존 성능 계측 기준선을 보존합니다.
+- Rigidbody2D 이동은 `FixedUpdate`, 카메라 추적은 `LateUpdate + SmoothDamp`로 분리합니다.
+- Enemy↔Enemy 충돌을 비활성화하고 자동 Spawn Enemy에 목표 Offset을 둡니다.
+- EXP Gem은 Collider/Rigidbody 대신 거리 비교로 회수합니다.
+- Pool은 Stack으로 관리하고 재사용 상태는 `OnEnable`에서 초기화합니다.
+- 게임 시간은 `Time.deltaTime`, 성능 측정 시간은 `Time.unscaledDeltaTime`을 사용합니다.
+- 자동 Spawn은 회전형 180도 섹터, 활성 Enemy 상한은 400으로 유지합니다.
 
-설계 선택의 근거와 버린 대안은 [DECISIONS.md](./DECISIONS.md)에서 확인할 수 있습니다.
+선택 이유와 트레이드오프는 [DECISIONS.md](DECISIONS.md)에 기록했습니다.
 
 ## Controls
 
-### Gameplay
-
-| 입력            | 동작                                                    |
-| --------------- | ------------------------------------------------------- |
-| `W` `A` `S` `D` | 플레이어 이동                                           |
-| `ESC`           | PauseMenu 열기/닫기, SettingsPanel에서 PauseMenu로 복귀 |
-| PauseMenu 버튼  | Resume, Settings, Game Quit                             |
-
-무기는 자동으로 발사됩니다.
-
-### Developer / Benchmark
-
-| 입력 | 동작                                                                   |
-| ---- | ---------------------------------------------------------------------- |
-| `F1` | Enemy 100마리 즉시 생성. 360도 전체 원주를 유지하는 성능 계측용 버스트 |
-| `F3` | 기본 숨김 상태의 성능 오버레이 표시/숨김                               |
-| `F4` | 성능 모니터의 `AVG`, `worst`, burst 측정값 리셋                        |
-| `F5` | 살아있는 Enemy 전체 처치. 게임 로직 테스트용                           |
+| 입력 | 동작 |
+| --- | --- |
+| `W` `A` `S` `D` / 방향키 | Player 이동 |
+| Mouse Click | Upgrade 카드와 UI 버튼 선택 |
+| `U` | Upgrade 현황 표시/숨김 |
+| `ESC` | PauseMenu 열기/닫기, Settings에서 뒤로 가기 |
 
 ## Third-Party Assets
 
-게임 로직, 성능 측정, 최적화 코드는 직접 구현했습니다. 시각 아트에는 아래 외부 에셋을 사용합니다.
+게임 로직, 성능 측정, 최적화 코드는 직접 구현했습니다. 시각·오디오 Asset은 아래 외부 Asset을 사용합니다.
 
 - Asset: **Undead Survivor Asset Pack**
 - Creator: Goldmetal
 - Source: Unity Asset Store
 - License: Standard Unity Asset Store EULA
 
-The original Asset Store files are not included in this repository.
-
-`Assets/Undead Survivor/`와 해당 `.meta` 파일은 `.gitignore`로 제외되어 있습니다.
+The original Asset Store files are not included in this repository. `Assets/Undead Survivor/`와 해당 `.meta`는 `.gitignore`에서 제외됩니다.
 
 ## Run / Setup
 
 1. Unity Hub에서 Unity **6000.0.82f1**로 프로젝트를 엽니다.
-2. 시각 에셋이 필요한 환경에서는 Undead Survivor Asset Pack을 별도로 Import합니다.
+2. 필요한 환경에서는 Undead Survivor Asset Pack을 별도로 Import합니다.
 3. `Assets/Scenes/SampleScene.unity`를 엽니다.
 4. Play를 실행합니다.
 
 ## Project Status
 
-핵심 게임 루프, 성능 측정·풀링 비교 경로, PauseMenu와 디스플레이 설정이 구현돼 있습니다.
-Unity Play 및 Windows Build에서 게임 진행, PauseMenu, 화면 모드·해상도 변경, HUD/UI 레이아웃을 검증했습니다.
-
-이 프로젝트의 중심 산출물은 “풀링을 적용했다”는 사실이 아니라, **측정 조건을 통제하고 실제 결과로
-주장을 제한한 과정**입니다.
+핵심 게임 루프, 성능 측정·Pooling 비교 경로, UI/Settings/Audio, Windows Build 검증을 마친 완성 프로토타입 상태입니다. 향후 확장 후보는 Boss 같은 게임 콘텐츠 추가이며, 기존 성능 측정 기록은 현재 상태와 분리해 보존합니다.
 
 ## Documentation
 
-- [PERF_LOG.md](./PERF_LOG.md) — 측정 조건, 실제 수치, 이상치와 기각한 가설
-- [DECISIONS.md](./DECISIONS.md) — 설계 선택의 이유와 트레이드오프
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) — 실제 증상, 원인, 판별, 해결
-- [UPDATELOG.md](./UPDATELOG.md) — 날짜별 구현 및 검증 기록
+- [FEATURES.md](FEATURES.md): 기능별 동작, 구현 방식, 이유
+- [DECISIONS.md](DECISIONS.md): 설계 선택과 트레이드오프
+- [PERF_LOG.md](PERF_LOG.md): 원본 성능 측정 조건과 결과
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md): 실제 오류 해결 기록
+- [UPDATELOG.md](UPDATELOG.md): 날짜별 구현·검증 이력

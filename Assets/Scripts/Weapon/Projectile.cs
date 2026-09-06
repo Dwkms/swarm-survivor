@@ -7,9 +7,13 @@ public class Projectile : MonoBehaviour
     [SerializeField] private float lifeTime = 3f;
     [SerializeField] private int damage = 10;
 
-    public int Damage => damage;
+    public int BaseDamage => damage;
+    public int Damage => currentDamage;
 
     private Rigidbody2D rb;
+    // 풀에서 꺼낸 이번 활성화에만 적용되는 피해량이다.
+    // 공용 Prefab의 기본 damage를 무기별 강화값으로 덮어쓰지 않는다.
+    private int currentDamage;
 
     // 관통하지 않는 총알이다. 한 번 맞추면 끝.
     private bool hasHit;
@@ -17,6 +21,11 @@ public class Projectile : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+
+        if (damage < 1)
+        {
+            Debug.LogError("[Projectile] Damage는 1 이상이어야 합니다.", this);
+        }
     }
     private float lifeTimer;
 
@@ -25,6 +34,7 @@ public class Projectile : MonoBehaviour
     {
         hasHit = false;
         lifeTimer = lifeTime;
+        currentDamage = damage;
     }
 
     private void Update()
@@ -42,6 +52,19 @@ public class Projectile : MonoBehaviour
 
     public void Launch(Vector2 direction)
     {
+        Launch(direction, damage);
+    }
+
+    public void Launch(Vector2 direction, int damageValue)
+    {
+        if (damageValue < 1)
+        {
+            Debug.LogError("[Projectile] Launch Damage는 1 이상이어야 합니다.", this);
+            PoolManager.Despawn(gameObject);
+            return;
+        }
+
+        currentDamage = damageValue;
         Vector2 dir = direction.normalized;
 
         rb.linearVelocity = dir * speed;
@@ -68,7 +91,7 @@ public class Projectile : MonoBehaviour
         if (enemy == null) return;
 
         hasHit = true;
-        enemy.TakeDamage(damage);
+        enemy.TakeDamage(currentDamage);
 
         PoolManager.Despawn(gameObject);
     }

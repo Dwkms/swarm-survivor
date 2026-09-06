@@ -5,17 +5,55 @@ public class BulletWeapon : MonoBehaviour
     [Header("무기 설정")]
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private float fireInterval = 0.80f;   // 불릿 Lv1 = 0.80초
+    [SerializeField] private int projectileCount = 3;
+    [SerializeField] private float spreadAngle = 20f;
 
     // 스포너와 동일한 누적 방식.
     // 발사 주기가 프레임레이트에 끌려다니면 초당 데미지가 달라지고,
     // 그러면 "적 300마리에서 성능이 어떤가"를 재는 조건 자체가 흔들린다.
     private float fireAccumulator;
+    private bool isConfigurationValid;
+    private int projectileBaseDamage;
+    private float damageMultiplier = 1f;
 
     private void Start()
     {
+        isConfigurationValid = true;
+
         if (projectilePrefab == null)
         {
             Debug.LogError("[BulletWeapon] Projectile Prefab이 비어 있다.", this);
+            isConfigurationValid = false;
+        }
+        else
+        {
+            Projectile projectile = projectilePrefab.GetComponent<Projectile>();
+            if (projectile == null)
+            {
+                Debug.LogError("[BulletWeapon] Projectile Prefab에 Projectile 컴포넌트가 없습니다.", this);
+                isConfigurationValid = false;
+            }
+            else
+            {
+                projectileBaseDamage = projectile.BaseDamage;
+                if (projectileBaseDamage < 1)
+                {
+                    Debug.LogError("[BulletWeapon] Projectile 기본 Damage는 1 이상이어야 합니다.", this);
+                    isConfigurationValid = false;
+                }
+            }
+        }
+
+        if (projectileCount < 1)
+        {
+            Debug.LogError("[BulletWeapon] Projectile Count는 1 이상이어야 합니다.", this);
+            isConfigurationValid = false;
+        }
+
+        if (spreadAngle < 0f)
+        {
+            Debug.LogError("[BulletWeapon] Spread Angle은 0 이상이어야 합니다.", this);
+            isConfigurationValid = false;
         }
     }
 
@@ -23,6 +61,8 @@ public class BulletWeapon : MonoBehaviour
     // 실제 이동은 생성된 Projectile의 Rigidbody2D가 물리 스텝에서 처리한다.
     private void Update()
     {
+        if (!isConfigurationValid) return;
+
         fireAccumulator += Time.deltaTime;
 
         while (fireAccumulator >= fireInterval)
@@ -44,20 +84,59 @@ public class BulletWeapon : MonoBehaviour
     public float FireInterval => fireInterval;
     public void SetFireInterval(float value) => fireInterval = value;
 
+    public void SetDamageMultiplier(float value)
+    {
+        if (value <= 0f)
+        {
+            Debug.LogError("[BulletWeapon] Damage Multiplier는 0보다 커야 합니다.", this);
+            return;
+        }
+
+        damageMultiplier = value;
+    }
+
     private void Fire(Transform target)
     {
-        // 발사 시점의 방향을 계산해 총알에 넘긴다.
-        // 넘긴 뒤에는 총알이 스스로 직진할 뿐, 적을 따라가지 않는다(유도탄 아님).
-        Vector2 dir = (Vector2)(target.position - transform.position);
+        // 최근접 Enemy 방향은 Burst마다 한 번만 구한다.
+        // 이후 펠릿은 이 중앙 방향을 회전시킬 뿐, 각각 다시 타겟을 찾지 않는다.
+        Vector2 centerDirection = ((Vector2)target.position - (Vector2)transform.position).normalized;
+        float angleStep = projectileCount > 1 ? spreadAngle / (projectileCount - 1) : 0f;
+        float startAngle = -spreadAngle * 0.5f;
+        int projectileDamage = Mathf.RoundToInt(projectileBaseDamage * damageMultiplier);
+        bool launchedProjectile = false;
 
-        GameObject obj = PoolManager.Spawn(projectilePrefab, transform.position, Quaternion.identity);
-
-        Projectile projectile = obj.GetComponent<Projectile>();
-        if (projectile != null)
+        for (int i = 0; i < projectileCount; i++)
         {
-            projectile.Launch(dir);
+            // 3발, 총 20도면 -10도 / 0도 / +10도다.
+            Vector2 direction = RotateDirection(centerDirection, startAngle + angleStep * i);
+            GameObject obj = PoolManager.Spawn(projectilePrefab, transform.position, Quaternion.identity);
+            Projectile projectile = obj.GetComponent<Projectile>();
+
+            if (projectile == null)
+            {
+                continue;
+            }
+
+            projectile.Launch(direction, projectileDamage);
+            launchedProjectile = true;
+        }
+
+        // 펠릿 수와 관계없이 실제로 성립한 Burst 하나에만 발사음을 낸다.
+        if (launchedProjectile)
+        {
             GameAudio.PlayFire();
         }
+    }
+
+    private static Vector2 RotateDirection(Vector2 direction, float angleDegrees)
+    {
+        float radians = angleDegrees * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(radians);
+        float sin = Mathf.Sin(radians);
+
+        return new Vector2(
+            direction.x * cos - direction.y * sin,
+            direction.x * sin + direction.y * cos);
     }
 
     private Transform FindNearestEnemy()

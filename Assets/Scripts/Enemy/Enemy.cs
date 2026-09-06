@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -12,6 +13,13 @@ public class Enemy : MonoBehaviour
     [SerializeField] private int contactDamage = 5;   // 몸에 닿았을 때 주는 피해
     [SerializeField] private int scoreValue = 10;   // 슬라임 기준
 
+    [Header("Animation")]
+    [SerializeField] private Animator animator;
+    [SerializeField] private float deathAnimationDuration = 0.3f;
+
+    private static readonly int HitHash = Animator.StringToHash("Hit");
+    private static readonly int DeadHash = Animator.StringToHash("Dead");
+
     [Header("드랍")]
     [SerializeField] private GameObject expGemPrefab;
 
@@ -23,6 +31,7 @@ public class Enemy : MonoBehaviour
     public int ContactDamage => contactDamage;
 
     private Rigidbody2D rb;
+    private Collider2D enemyCollider;
     private Transform target;
     private Vector2 approachOffset;
 
@@ -35,6 +44,22 @@ public class Enemy : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        enemyCollider = GetComponent<Collider2D>();
+
+        if (animator == null)
+        {
+            Debug.LogError("[Enemy] Animator 참조가 비어 있습니다. Enemy 프리팹의 Animator를 연결하세요.", this);
+        }
+
+        if (enemyCollider == null)
+        {
+            Debug.LogError("[Enemy] Collider2D를 찾지 못했습니다. Enemy 프리팹의 Collider를 확인하세요.", this);
+        }
+
+        if (deathAnimationDuration <= 0f)
+        {
+            Debug.LogError("[Enemy] Death Animation Duration은 0보다 커야 합니다.", this);
+        }
     }
 
     private void Start()
@@ -63,6 +88,12 @@ public class Enemy : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (isDead)
+        {
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
         if (target == null)
         {
             rb.linearVelocity = Vector2.zero;
@@ -92,11 +123,22 @@ public class Enemy : MonoBehaviour
         {
             Die();
         }
+        else if (animator != null)
+        {
+            // 실제 피해로 생존한 경우에만 Hit 상태를 전환한다.
+            animator.SetTrigger(HitHash);
+        }
     }
 
     private void Die()
     {
         isDead = true;
+        rb.linearVelocity = Vector2.zero;
+
+        if (enemyCollider != null)
+        {
+            enemyCollider.enabled = false;
+        }
 
         if (GameManager.Instance != null)
         {
@@ -105,9 +147,25 @@ public class Enemy : MonoBehaviour
 
         DropExpGem();
 
-        // Destroy가 아니라 풀로 반납한다.
-        // Destroy는 프레임 끝에 처리되지만 Despawn은 즉시 비활성화되고,
-        // OnDisable에서 활성 카운터도 바로 줄어든다.
+        if (animator != null)
+        {
+            animator.SetBool(DeadHash, true);
+        }
+
+        if (deathAnimationDuration <= 0f)
+        {
+            PoolManager.Despawn(gameObject);
+            return;
+        }
+
+        StartCoroutine(DespawnAfterDeathAnimation());
+    }
+
+    private IEnumerator DespawnAfterDeathAnimation()
+    {
+        // Animator Update Mode가 Normal이므로 Pause 중 animation과 함께 대기가 멈춘다.
+        yield return new WaitForSeconds(deathAnimationDuration);
+
         PoolManager.Despawn(gameObject);
     }
 
@@ -135,6 +193,17 @@ public class Enemy : MonoBehaviour
         if (rb != null)
         {
             rb.linearVelocity = Vector2.zero;
+        }
+
+        if (enemyCollider != null)
+        {
+            enemyCollider.enabled = true;
+        }
+
+        if (animator != null)
+        {
+            animator.SetBool(DeadHash, false);
+            animator.ResetTrigger(HitHash);
         }
 
         EnemySpawner.RegisterEnemy();

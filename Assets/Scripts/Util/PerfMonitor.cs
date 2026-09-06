@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class PerfMonitor : MonoBehaviour
 {
+    [Header("Benchmark Mode")]
+    [SerializeField] private bool benchmarkToolsEnabled = false;
+
     [Header("표시 설정")]
     [SerializeField] private float refreshInterval = 0.5f;  // 문자열 갱신 주기
     [SerializeField] private int fontSize = 18;
@@ -11,11 +14,14 @@ public class PerfMonitor : MonoBehaviour
     [SerializeField] private KeyCode burstKey = KeyCode.F1;  // 스포너의 대량 스폰 키
     [SerializeField] private KeyCode toggleKey = KeyCode.F3;  // 표시 on/off
     [SerializeField] private KeyCode resetKey = KeyCode.F4;  // 최악 프레임 리셋
+    [SerializeField] private KeyCode skip30SecondsKey = KeyCode.F6;
+    [SerializeField] private KeyCode skip60SecondsKey = KeyCode.F7;
 
     // 해상도 설정
     [SerializeField] private bool forceDisableVSync = true;
     [SerializeField] private Vector2Int measurementResolution = new Vector2Int(1280, 720);
 
+    public static bool BenchmarkToolsEnabled { get; private set; }
 
     // 화면에 그릴 문자열. 0.5초에 한 번만 새로 만든다.
     // 매 프레임 만들면 측정 도구 자신이 GC를 만들게 된다.
@@ -54,6 +60,9 @@ public class PerfMonitor : MonoBehaviour
 
     private void Awake()
     {
+        BenchmarkToolsEnabled = benchmarkToolsEnabled;
+        if (!BenchmarkToolsEnabled) return;
+
         if (forceDisableVSync)
         {
             QualitySettings.vSyncCount = 0;
@@ -75,6 +84,8 @@ public class PerfMonitor : MonoBehaviour
 
     private void OnDestroy()
     {
+        BenchmarkToolsEnabled = false;
+
         // 코드로 만든 텍스처는 직접 해제해야 한다. 안 하면 에디터가 누수 경고를 낸다.
         if (backgroundTex != null)
         {
@@ -84,6 +95,8 @@ public class PerfMonitor : MonoBehaviour
 
     private void Update()
     {
+        if (!BenchmarkToolsEnabled) return;
+
         // ─────────────────────────────────────────────────────────
         // 1. 직전 프레임이 F1 버스트 프레임이었다면 여기서 기록한다.
         //
@@ -121,6 +134,16 @@ public class PerfMonitor : MonoBehaviour
             lastBurstMs = -1f;
             sessionMs = 0f;        // 추가
             sessionFrames = 0;     // 추가
+        }
+
+        if (Input.GetKeyDown(skip30SecondsKey))
+        {
+            AdvanceGameTimeForBenchmark(30f);
+        }
+
+        if (Input.GetKeyDown(skip60SecondsKey))
+        {
+            AdvanceGameTimeForBenchmark(60f);
         }
 
         // ── 3. 프레임 시간 누적 ──
@@ -181,8 +204,20 @@ public class PerfMonitor : MonoBehaviour
             $"elapsed {elapsed:F1} s     (F3 숨김 / F4 리셋)";
     }
 
+    private void AdvanceGameTimeForBenchmark(float seconds)
+    {
+        GameManager gameManager = GameManager.Instance;
+        if (gameManager == null || !gameManager.IsPlaying || Time.timeScale <= 0f) return;
+
+        if (gameManager.AdvanceTimeForBenchmark(seconds))
+        {
+            Debug.Log($"[Benchmark] Game time +{seconds:F0}s -> {gameManager.GetElapsedTimeText()}");
+        }
+    }
+
     private void OnGUI()
     {
+        if (!BenchmarkToolsEnabled) return;
         if (!visible) return;
 
         // OnGUI는 한 프레임에 Layout·Repaint 등으로 여러 번 호출된다.

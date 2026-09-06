@@ -58,6 +58,29 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Benchmark에서 특정 시간대의 스폰·승리 처리를 빠르게 확인하기 위한 clock jump다.
+    // timeScale을 높이거나 건너뛴 시간의 simulation을 재생하지 않는다.
+    public bool AdvanceTimeForBenchmark(float seconds)
+    {
+        if (seconds <= 0f)
+        {
+            Debug.LogError("[GameManager] Benchmark time advance는 0보다 커야 합니다.", this);
+            return false;
+        }
+
+        if (!IsPlaying) return false;
+
+        ElapsedTime = Mathf.Min(ElapsedTime + seconds, gameDuration);
+
+        // 일반 Update의 시간 종료와 같은 경로를 사용해 ResultPanel 등 기존 처리를 보존한다.
+        if (ElapsedTime >= gameDuration)
+        {
+            EndGame(true);
+        }
+
+        return true;
+    }
+
     private void OnEnable()
     {
         if (playerStats != null)

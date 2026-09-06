@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4247772480868583332}
   - component: {fileID: 8571091405509179374}
   - component: {fileID: -1728554441682521283}
+  - component: {fileID: 6062326266685038433}
   m_Layer: 7
   m_Name: Enemy
   m_TagString: Untagged
@@ -180,4 +181,27 @@ MonoBehaviour:
   maxHealth: 20
   contactDamage: 5
   scoreValue: 10
+  animator: {fileID: 6062326266685038433}
   expGemPrefab: {fileID: 4429460681015783737, guid: 3b45d73b3b1c78d4782b3b762becaa78, type: 3}
+--- !u!95 &6062326266685038433
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4017933818163956792}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 22100000, guid: 12cfc8b2360c2fc4499d4f6f6607671a, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

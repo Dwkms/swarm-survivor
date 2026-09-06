@@ -188,10 +188,10 @@ solver가 접촉점을 전부 푸는 비용이 사라지므로 **성능 측정 �
 
 플레이어가 멈추면 적들이 목표 지점에 도달하고, `(target - position).normalized`가
 길이가 극히 작은 벡터에 대해 `Vector2.zero`를 반환하면서 속도가 0이 됩니다.
-그러면 물리 엔진이 **900개를 전부 재웁니다(sleep).** 잠든 바디는 시뮬레이션에서 사실상
-제외되므로 비용이 사라집니다.
-
-**541fps는 성능이 아니라 적들이 잠들어 있어서 나온 숫자입니다.**
+처음에는 정지 시 Enemy 수면이 큰 차이를 만들었을 가능성을 가설로 두었습니다. 그러나 이후
+`SleepProbe` 측정에서 적 100마리 중 수면은 정지 시 11마리, 이동 중 0마리로 확인됐습니다.
+따라서 수면만으로 큰 성능 차이를 설명할 수 없으며, 이 수치는 당시 측정 조건과 계측 방법이
+일치하지 않았던 문제로 취급합니다. 수면을 확정 원인으로 말하지 않습니다.
 
 ### 판별
 
@@ -407,7 +407,7 @@ PC를 옮긴 뒤에는 ▶ 재생 전에 **Console을 Clear하고**, 아래를 �
 | Player의 Tag / Layer | `Player` / `Player` |
 | Player · Rigidbody 2D · Sleeping Mode | `Never Sleep` |
 | Player · Bullet Weapon · Projectile Prefab | 채워짐 |
-| Player · Player Stats · Max Health | `100` |
+| Player · Player Stats · Max Health | `200` |
 | EnemySpawner · Enemy Prefab | 채워짐 |
 | Project Settings · Physics 2D 매트릭스 | `Enemy ↔ Enemy` 해제 |
 
@@ -670,8 +670,9 @@ Font Size를 넉넉히 줬는데도 화면에서 글자가 깨알같이 보입�
 
 ### 해결
 
-**기준 해상도를 실제 빌드 해상도에 맞춥니다.** 이 프로젝트는 측정을 위해 창 크기를
-1280×720으로 고정했으므로 기준 해상도도 1280×720으로 뒀습니다. `Match`는 `0.5`입니다.
+**기준 해상도와 측정 해상도는 구분합니다.** 현재 Scene의 Canvas Scaler Reference Resolution은
+1920×1080이고 `Match`는 `0.5`입니다. 성능 측정용 창모드 1280×720은 PERF_LOG의 측정 조건이며,
+Canvas Reference Resolution 자체를 뜻하지는 않습니다.
 
 Game 뷰 상단의 `Free Aspect`를 실제 빌드 해상도로 바꿔두면 에디터에서도 같은 크기로
 확인할 수 있습니다.

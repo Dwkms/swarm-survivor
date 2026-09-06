@@ -13,6 +13,8 @@ public class RadialWeapon : MonoBehaviour
     private float fireAccumulator;
     private bool isUnlocked;
     private bool isConfigured;
+    private int projectileBaseDamage;
+    private float damageMultiplier = 1f;
 
     public bool IsUnlocked => isUnlocked;
 
@@ -51,9 +53,21 @@ public class RadialWeapon : MonoBehaviour
         fireAccumulator = 0f;
     }
 
+    public void SetDamageMultiplier(float value)
+    {
+        if (value <= 0f)
+        {
+            Debug.LogError("[RadialWeapon] Damage Multiplier는 0보다 커야 합니다.", this);
+            return;
+        }
+
+        damageMultiplier = value;
+    }
+
     private void FireBurst()
     {
         float angleStep = 360f / projectileCount;
+        int projectileDamage = Mathf.RoundToInt(projectileBaseDamage * damageMultiplier);
         bool launchedProjectile = false;
 
         for (int i = 0; i < projectileCount; i++)
@@ -70,7 +84,7 @@ public class RadialWeapon : MonoBehaviour
                 continue;
             }
 
-            projectile.Launch(direction);
+            projectile.Launch(direction, projectileDamage);
             launchedProjectile = true;
         }
 
@@ -90,10 +104,23 @@ public class RadialWeapon : MonoBehaviour
             Debug.LogError("[RadialWeapon] Projectile Prefab이 비어 있습니다.", this);
             isValid = false;
         }
-        else if (projectilePrefab.GetComponent<Projectile>() == null)
+        else
         {
-            Debug.LogError("[RadialWeapon] Projectile Prefab에 Projectile 컴포넌트가 없습니다.", this);
-            isValid = false;
+            Projectile projectile = projectilePrefab.GetComponent<Projectile>();
+            if (projectile == null)
+            {
+                Debug.LogError("[RadialWeapon] Projectile Prefab에 Projectile 컴포넌트가 없습니다.", this);
+                isValid = false;
+            }
+            else
+            {
+                projectileBaseDamage = projectile.BaseDamage;
+                if (projectileBaseDamage < 1)
+                {
+                    Debug.LogError("[RadialWeapon] Projectile 기본 Damage는 1 이상이어야 합니다.", this);
+                    isValid = false;
+                }
+            }
         }
 
         if (fireInterval <= 0f)
