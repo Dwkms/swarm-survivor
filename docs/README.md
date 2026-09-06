@@ -24,7 +24,7 @@ Unity 6로 만든 2D Survivor 프로토타입입니다. 기능 개수보다 **�
 
 ## Gameplay
 
-[Gameplay 영상](../swarm_survivor_%EC%98%81%EC%83%81.mp4)
+[Windows Build v1.0.0에서 Gameplay 확인](https://github.com/Dwkms/swarm-survivor/releases/tag/v1.0.0)
 
 ## Tech Stack
 
@@ -59,7 +59,7 @@ Unity 6로 만든 2D Survivor 프로토타입입니다. 기능 개수보다 **�
 
 | PERF_LOG 측정 지표 | OFF (`Instantiate`/`Destroy`) | ON (Pooling) | PERF_LOG 기록 |
 | --- | ---: | ---: | --- |
-| A. 생성 (`F1`, Enemy 100) | 1.24 / 1.93 ms | 0.93 / 2.90 ms | 중앙값 기준 약 40% 감소 |
+| A. 생성 (`F1`, Enemy 100) | 1.24 / 1.93 ms | 0.93 / 2.90 ms | 단일 개선율 결론 보류 |
 | B. 이동 AVG (Enemy 900) | 3.73 / 3.58 ms | 3.42 ms | 변화 없음 |
 | C. 제거+생성 worst (`F5`) | 15.10 / 16.17 ms | 11.72 / 11.81 ms | 약 25% 감소 |
 
@@ -106,7 +106,7 @@ Pooling은 생성 비용과 대량 Destroy/Spawn이 겹치는 구간의 worst fr
 
 ## Third-Party Assets
 
-게임 로직, 성능 측정, 최적화 코드는 직접 구현했습니다. 시각·오디오 Asset은 아래 외부 Asset을 사용합니다.
+게임 로직과 성능 측정·최적화 코드 작성에는 생성형 AI 코딩 도구를 적극 활용했습니다. 기능 요구사항과 성공 조건을 정의하고, Unity 적용·Play/Build 테스트·성능 측정·가설 검증·최종 판단을 직접 수행했습니다. 시각·오디오 Asset은 아래 외부 Asset을 사용합니다.
 
 - Asset: **Undead Survivor Asset Pack**
 - Creator: Goldmetal
