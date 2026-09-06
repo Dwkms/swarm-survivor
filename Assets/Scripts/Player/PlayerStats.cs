@@ -91,6 +91,9 @@ public class PlayerStats : MonoBehaviour
         isDead = true;
         currentHealth = 0;
 
+        // 사망 확정 직후 재생해 GameManager의 지연된 실패음과 겹치지 않게 한다.
+        GameAudio.PlayPlayerDeath();
+
         // SetActive(false)를 하지 않는다.
         // 결과 화면에서 플레이어가 사라져 있으면 어색하고,
         // 게임 정지는 GameManager가 timeScale로 처리한다.

@@ -6,7 +6,8 @@ public enum UpgradeType
     MoveSpeed,      // 이동속도 +15%
     FireInterval,   // 발사간격 -12%
     PickupRadius,   // 픽업반경 +30%
-    MaxHealth       // 최대체력 +20
+    MaxHealth,      // 최대체력 +20
+    RadialShot      // 8방향 방사형 사격 해금
 }
 
 // Inspector에서 값을 채우기 위한 데이터 묶음.
@@ -32,6 +33,7 @@ public class UpgradeManager : MonoBehaviour
     [SerializeField] private PlayerStats playerStats;
     [SerializeField] private BulletWeapon bulletWeapon;
     [SerializeField] private ExpCollector expCollector;
+    [SerializeField] private RadialWeapon radialWeapon;
 
     // 기본값. 업그레이드는 항상 여기서부터 다시 계산한다.
     // 현재값에 곱해나가면 1.15^3 = 1.52가 되어 "+15% 3중첩"과 어긋난다.
@@ -49,6 +51,7 @@ public class UpgradeManager : MonoBehaviour
         if (playerStats == null) playerStats = GetComponent<PlayerStats>();
         if (bulletWeapon == null) bulletWeapon = GetComponent<BulletWeapon>();
         if (expCollector == null) expCollector = GetComponent<ExpCollector>();
+        if (radialWeapon == null) radialWeapon = GetComponent<RadialWeapon>();
 
         baseMoveSpeed = playerController.MoveSpeed;
         baseFireInterval = bulletWeapon.FireInterval;
@@ -60,7 +63,12 @@ public class UpgradeManager : MonoBehaviour
     {
         if (options.Count == 0)
         {
-            Debug.LogError("[UpgradeManager] 업그레이드 목록이 비어 있다. Inspector에서 4장을 채워라.", this);
+            Debug.LogError("[UpgradeManager] 업그레이드 목록이 비어 있다. Inspector에서 카드를 채워라.", this);
+        }
+
+        if (radialWeapon == null)
+        {
+            Debug.LogError("[UpgradeManager] RadialWeapon을 찾지 못했습니다. Player의 RadialWeapon 참조를 확인하세요.", this);
         }
     }
 
@@ -71,7 +79,7 @@ public class UpgradeManager : MonoBehaviour
 
         for (int i = 0; i < options.Count; i++)
         {
-            if (options[i].currentStack < options[i].maxStack)
+            if (CanOffer(options[i]))
             {
                 available.Add(options[i]);
             }
@@ -94,10 +102,13 @@ public class UpgradeManager : MonoBehaviour
     public void Apply(UpgradeOption option)
     {
         if (option == null) return;
-        if (option.currentStack >= option.maxStack) return;
+        if (!CanOffer(option)) return;
 
         option.currentStack++;
         ApplyStat(option.type, option.currentStack);
+
+        // 유효한 카드가 실제로 적용된 뒤에만 선택음을 재생한다.
+        GameAudio.PlayUpgradeSelect();
 
         Debug.Log($"업그레이드: {option.title}  ({option.currentStack}/{option.maxStack})");
     }
@@ -122,6 +133,21 @@ public class UpgradeManager : MonoBehaviour
             case UpgradeType.MaxHealth:
                 playerStats.SetMaxHealth(baseMaxHealth + 20 * stack);
                 break;
+
+            case UpgradeType.RadialShot:
+                radialWeapon.Unlock();
+                break;
         }
+    }
+
+    private bool CanOffer(UpgradeOption option)
+    {
+        if (option.type == UpgradeType.RadialShot)
+        {
+            // 1회 획득형 무기는 실제 해금 상태를 후보 조건으로 사용한다.
+            return radialWeapon != null && !radialWeapon.IsUnlocked;
+        }
+
+        return option.currentStack < option.maxStack;
     }
 }

@@ -3124,8 +3124,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1551914009}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -3642,6 +3642,10 @@ MonoBehaviour:
   bgmClip: {fileID: 8300000, guid: 4559935c00ef8e94b846e2e03e39f0d0, type: 3}
   fireClip: {fileID: 8300000, guid: 6f0c572d865b4664db7a460972bc4768, type: 3}
   expPickupClip: {fileID: 8300000, guid: 4b294d59d2399014daa718b35c9de73b, type: 3}
+  playerHitClip: {fileID: 8300000, guid: 6b7eaf4532a2f614595ad58d2b86efc4, type: 3}
+  playerDeathClip: {fileID: 8300000, guid: 291608b8d286e2a4580ff36324455ce2, type: 3}
+  levelUpClip: {fileID: 8300000, guid: 64795b87003c2324fa0814fbc336066c, type: 3}
+  upgradeSelectClip: {fileID: 8300000, guid: 4b294d59d2399014daa718b35c9de73b, type: 3}
   winClip: {fileID: 8300000, guid: 2c4bc183a5df5aa4baf7c4fcf236a2de, type: 3}
   loseClip: {fileID: 8300000, guid: c8a3fe17a6641ec48b38fb455a40a223, type: 3}
 --- !u!4 &1192507313
@@ -3692,7 +3696,7 @@ RectTransform:
   m_Father: {fileID: 958930054}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.2, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -3766,8 +3770,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 312952959}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.2, y: 0}
+  m_AnchorMax: {x: 0.2, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -4269,7 +4273,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1422991496
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5959,6 +5963,7 @@ GameObject:
   - component: {fileID: 1719291577}
   - component: {fileID: 1719291578}
   - component: {fileID: 1719291579}
+  - component: {fileID: 1719291580}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -6211,10 +6216,32 @@ MonoBehaviour:
     description: "\uCD5C\uB300\uCCB4\uB825 +20"
     maxStack: 3
     currentStack: 0
+  - type: 4
+    title: "\uBC29\uC0AC\uD615 \uC0AC\uACA9"
+    description: "2\uCD08\uB9C8\uB2E4 8\uBC29\uD5A5\uC73C\uB85C \uD0C4\uD658 \uBC1C\uC0AC"
+    maxStack: 1
+    currentStack: 0
   playerController: {fileID: 0}
   playerStats: {fileID: 0}
   bulletWeapon: {fileID: 0}
   expCollector: {fileID: 0}
+  radialWeapon: {fileID: 1719291580}
+--- !u!114 &1719291580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1719291569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55d33c6df83b4f6c9fca5e9ef8d2a6c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  projectilePrefab: {fileID: 253881072272988324, guid: 8cc7eff9a3201294184efc1fff4b1eb2, type: 3}
+  fireInterval: 2
+  projectileCount: 8
+  startUnlocked: 0
 --- !u!1 &1742834701
 GameObject:
   m_ObjectHideFlags: 0
@@ -6248,7 +6275,7 @@ RectTransform:
   m_Father: {fileID: 323568355}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

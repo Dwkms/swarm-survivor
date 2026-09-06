@@ -79,6 +79,8 @@ public class LevelSystem : MonoBehaviour
         {
             CurrentExp -= RequiredExp;
             CurrentLevel++;
+            // EXP 획득이 아니라 실제 레벨 값이 증가한 순간에만 재생한다.
+            GameAudio.PlayLevelUp();
             pendingLevelUps++;
         }
 

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class GameAudio : MonoBehaviour
@@ -11,12 +12,17 @@ public class GameAudio : MonoBehaviour
     [SerializeField] private AudioClip fireClip;
     [SerializeField] private AudioClip expPickupClip;
     [SerializeField] private AudioClip playerHitClip;
+    [SerializeField] private AudioClip playerDeathClip;
+    [SerializeField] private AudioClip levelUpClip;
+    [SerializeField] private AudioClip upgradeSelectClip;
     [SerializeField] private AudioClip winClip;
     [SerializeField] private AudioClip loseClip;
 
     private static GameAudio instance;
     private static bool warnedMissingInstance;
+    private const float LoseDelay = 0.4f;
     private bool isInitialized;
+    private bool isLoseScheduled;
 
     public float BgmVolume => bgmSource != null ? bgmSource.volume : 0f;
     public float SfxVolume => sfxSource != null ? sfxSource.volume : 0f;
@@ -74,12 +80,42 @@ public class GameAudio : MonoBehaviour
         audio.sfxSource.PlayOneShot(audio.playerHitClip);
     }
 
+    public static void PlayPlayerDeath()
+    {
+        if (!TryGetReadyInstance(out GameAudio audio)) return;
+
+        audio.sfxSource.PlayOneShot(audio.playerDeathClip);
+    }
+
+    public static void PlayLevelUp()
+    {
+        if (!TryGetReadyInstance(out GameAudio audio)) return;
+
+        audio.sfxSource.PlayOneShot(audio.levelUpClip);
+    }
+
+    public static void PlayUpgradeSelect()
+    {
+        if (!TryGetReadyInstance(out GameAudio audio)) return;
+
+        audio.sfxSource.PlayOneShot(audio.upgradeSelectClip);
+    }
+
     public static void PlayGameEnd(bool victory)
     {
         if (!TryGetReadyInstance(out GameAudio audio)) return;
 
         audio.bgmSource.Stop();
-        audio.sfxSource.PlayOneShot(victory ? audio.winClip : audio.loseClip);
+        if (victory)
+        {
+            audio.sfxSource.PlayOneShot(audio.winClip);
+            return;
+        }
+
+        if (audio.isLoseScheduled) return;
+
+        audio.isLoseScheduled = true;
+        audio.StartCoroutine(audio.PlayLoseAfterDelay());
     }
 
     public void SetBgmVolume(float value)
@@ -101,6 +137,13 @@ public class GameAudio : MonoBehaviour
         if (!isInitialized) return;
 
         sfxSource.PlayOneShot(expPickupClip);
+    }
+
+    private IEnumerator PlayLoseAfterDelay()
+    {
+        // 게임은 이미 멈춘 상태이므로 realtime 대기로 사망음 뒤에 실패음을 재생한다.
+        yield return new WaitForSecondsRealtime(LoseDelay);
+        sfxSource.PlayOneShot(loseClip);
     }
 
     private static bool TryGetReadyInstance(out GameAudio audio)
@@ -160,6 +203,24 @@ public class GameAudio : MonoBehaviour
         if (playerHitClip == null)
         {
             Debug.LogError("[GameAudio] Player Hit Clip이 비어 있습니다.", this);
+            isValid = false;
+        }
+
+        if (playerDeathClip == null)
+        {
+            Debug.LogError("[GameAudio] Player Death Clip이 비어 있습니다.", this);
+            isValid = false;
+        }
+
+        if (levelUpClip == null)
+        {
+            Debug.LogError("[GameAudio] Level Up Clip이 비어 있습니다.", this);
+            isValid = false;
+        }
+
+        if (upgradeSelectClip == null)
+        {
+            Debug.LogError("[GameAudio] Upgrade Select Clip이 비어 있습니다.", this);
             isValid = false;
         }
 

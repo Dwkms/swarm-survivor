@@ -59,6 +59,10 @@
 - `GameAudio`를 추가해 BGM, BulletWeapon 발사, EXP 획득, 5분 생존 승리, Player 사망 실패 사운드를 재생하도록 했습니다.
 - SettingsPanel에 BGM/SFX Slider 실시간 볼륨 조절과 EXP 획득음 기반 SFX 미리듣기를 추가했습니다. 미리듣기는 Pause 중에도 동작하도록 `unscaledTime` 기준 0.2초 간격으로 제한했습니다.
 - Player HP가 실제로 감소한 비치명 피해에만 피격 효과음을 추가했습니다. 치명 피해에서는 기존 실패 효과음만 재생합니다.
+- 실제 레벨 증가와 Upgrade 카드 적용 성공 시 기존 SFX AudioSource에서 각각 레벨업·카드 선택 효과음을 재생하도록 추가했습니다.
+- Player 사망 확정 시 사망 효과음을 재생하고, 기존 실패 효과음은 realtime 0.4초 뒤에 재생해 서로 겹치지 않도록 분리했습니다.
+- 기존 Projectile과 PoolManager Spawn 경로를 재사용해 8방향 방사형 무기를 추가했습니다. Upgrade 획득 조건은 연결하지 않고 독립적으로 잠금·해제할 수 있게 구성했습니다.
+- Upgrade 후보 목록에 1회 획득형 `방사형 사격` 카드를 추가했습니다. RadialWeapon이 유효하고 잠금 상태일 때만 일반 후보로 포함되며, 해금 후에는 다시 등장하지 않습니다.
 
 ---
 
