@@ -80,6 +80,10 @@ public class PlayerStats : MonoBehaviour
         {
             Die();
         }
+        else
+        {
+            GameAudio.PlayPlayerHit();
+        }
     }
 
     private void Die()

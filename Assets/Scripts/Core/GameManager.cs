@@ -94,6 +94,7 @@ public class GameManager : MonoBehaviour
         IsPlaying = false;
         Time.timeScale = 0f;
 
+        GameAudio.PlayGameEnd(victory);
         Debug.Log(victory ? "승리 ? 5분 생존" : $"패배 ? {ElapsedTime:F1}초 생존");
 
         OnGameEnd?.Invoke(victory);

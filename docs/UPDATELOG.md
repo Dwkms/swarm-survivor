@@ -56,6 +56,9 @@
 - Unity Play 검증 전이므로 중첩 완화 효과를 해결 완료로 기록하지 않습니다.
 - 성능 모니터 오버레이가 기본적으로 숨김 상태로 시작하도록 변경했으며, 기존 F3 표시 토글과 F4 측정값 리셋은 유지했습니다.
 - PauseMenu에 게임 종료 버튼을 추가했습니다. Unity Editor에서는 Play Mode를 종료하고, Windows Build에서는 `Application.Quit()`으로 종료합니다.
+- `GameAudio`를 추가해 BGM, BulletWeapon 발사, EXP 획득, 5분 생존 승리, Player 사망 실패 사운드를 재생하도록 했습니다.
+- SettingsPanel에 BGM/SFX Slider 실시간 볼륨 조절과 EXP 획득음 기반 SFX 미리듣기를 추가했습니다. 미리듣기는 Pause 중에도 동작하도록 `unscaledTime` 기준 0.2초 간격으로 제한했습니다.
+- Player HP가 실제로 감소한 비치명 피해에만 피격 효과음을 추가했습니다. 치명 피해에서는 기존 실패 효과음만 재생합니다.
 
 ---
 

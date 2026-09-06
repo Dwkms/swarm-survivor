@@ -56,6 +56,7 @@ public class BulletWeapon : MonoBehaviour
         if (projectile != null)
         {
             projectile.Launch(dir);
+            GameAudio.PlayFire();
         }
     }
 

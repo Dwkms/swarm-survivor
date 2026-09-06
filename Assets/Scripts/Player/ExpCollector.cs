@@ -48,6 +48,7 @@ public class ExpCollector : MonoBehaviour
         if (collectedThisFrame > 0)
         {
             OnExpCollected?.Invoke(collectedThisFrame);
+            GameAudio.PlayExpPickup();
         }
     }
 
